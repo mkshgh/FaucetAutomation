@@ -12,6 +12,8 @@ Automate the process of claiming faucets as many popular ones as i can
 ## Stakecube
 
 - This one is an ongoing project. I will need to automate the signing in process as the google captcha.
+- Go to https://stakecube.net/?team=anderson.brenda and signup for the account
+- Get the selenium up and running https://selenium-python.readthedocs.io/
 - For now run the stackcube.net.py
 - manually enter the captcha 
 - navigate to https://stakecube.net/app/community/faucets
