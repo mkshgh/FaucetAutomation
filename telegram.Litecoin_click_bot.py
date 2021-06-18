@@ -21,6 +21,9 @@ from selenium.webdriver.common.action_chains import ActionChains
 # from selenium.common.exceptions import NoSuchElementException
 # from selenium.webdriver.support.ui import WebDriverWait
 # from selenium.webdriver.support import expected_conditions as EC
+# import keyboard
+# from keyboard import press
+# press('enter')
 # to remove the popup if exists
 
 
@@ -49,7 +52,7 @@ def get_driver(profile):
         Instance of the new browser
     """  
     options = FirefoxOptions()
-    # options.add_argument("--headless")
+    options.add_argument("--headless")
     fp = webdriver.FirefoxProfile(profile)
     teleminebot = webdriver.Firefox(firefox_profile=fp,options=options)
     teleminebot.maximize_window()
@@ -97,8 +100,11 @@ def logger(text,money_link,view_time,profile):
         profile: <current profile instance>
     Output:
         The log is written in logs.txt
-    """  
-    f = open("logs.txt", "a+")
+    """ 
+    current_time = datetime.datetime.now()
+    logs_time = "{}_{}_{}".format(str(current_time.year),str(current_time.month),str(current_time.day))
+    logs_file = os.path.join('logs',(logs_time+"_logs.txt")) 
+    f = open(logs_file, "a+")
     logs_write='['+profile+'] : ' + str(datetime.datetime.now())+ " > " + text + ' '+ str(money_link) + " for "+str(view_time)+'s\n'
     f.write(logs_write)
     f.close()
@@ -106,7 +112,7 @@ def logger(text,money_link,view_time,profile):
 
 def get_money_link(main_tab):
     """ 
-    Description: Get the link to browse
+    Description: Get the link to browser
     Input: 
         main_tab: <current tab instance>
     Output:
@@ -114,6 +120,7 @@ def get_money_link(main_tab):
     """ 
     # Keep clicking the button forever and make money
     main_tab.find_element(By.XPATH,'(//button[text()="🔎 Go to website"])[last()]').click()
+    wait(2)
     money_link:str = main_tab.find_element(By.XPATH,'(//div[@class="modal-content custom-scroll"])[last()]/a').get_attribute("href")
     ActionChains(main_tab).send_keys(Keys.ESCAPE).perform()
     wait(1)
@@ -134,7 +141,7 @@ def click_the_channel(main_tab):
 def ads_status(main_tab):
     """ 
     Description: Status of the ad after clicking the Visit Page button
-    Input: 
+    Input:
         main_tab: <current tab instance>
     Output:
         the status of the ad: 'nomoreads','visitwebsitenow','usedbyothers',etc
@@ -195,16 +202,20 @@ def click_visit_site(main_tab):
     Output:
         get the reply from the browser
     """
-    try:
-        # WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.XPATH, '//button[contains(text(),"🖥 Visit sites")]'))).click()
-        main_tab.find_element(By.XPATH, '//button[@class="Button default translucent round faded"][2]').click()
-        wait(1)
-        # Click the button to visit sites
-        main_tab.find_element(By.XPATH, '//button[contains(text(),"🖥 Visit sites")]').click()
-        wait(5)
-    except:
-        wait(2)
-
+    # WebDriverWait(driver, 20).until(expected_conditions.element_to_be_clickable((By.XPATH, '//button[contains(text(),"🖥 Visit sites")]'))).click()
+    input = main_tab.find_element(By.XPATH, '//div[@id="editable-message-text"]')
+    input.click()
+    wait(2)
+    # Click the button to visit sites
+    input.send_keys(Keys.CONTROL + "a")
+    input.send_keys(Keys.DELETE)
+    wait(1)
+    input.send_keys("/visit")
+    wait(1)
+    input.send_keys(Keys.ENTER)
+    # keyboard.write('visit')
+    # press('enter')
+    wait(2)
 
 def ad_viewer(profile):
     """ 
@@ -217,7 +228,7 @@ def ad_viewer(profile):
     # get driver to create a main_tab
     main_tab = get_driver(profile)
     print(profile)
-    profile = profile.split('\\')[-1]
+    profile = profile.split('\\')[-2]
     print('['+profile+ '] : ' +'Getting the browser ready\n')
     main_tab.get(BASE_URL)
     # wait(main_tab) to load
@@ -229,17 +240,17 @@ def ad_viewer(profile):
     temp_link=''
     stop=1
     wait(5)
-        
+            
     while stop:
         # click the visit site to get the link
         click_visit_site(main_tab)
         wait(5)
-
-        if ads_status(main_tab)=='nomoreads':
+        status_of_ads = ads_status(main_tab)
+        if status_of_ads=='nomoreads':
             stop = 0
             main_tab.quit()
             wait(1)
-        
+
         else:
             # links status from the url
             money_link=get_money_link(main_tab)
@@ -254,22 +265,23 @@ def runner():
     # check if new ads are avialable
     current_crypto_index=0
     while True:
-        # try:
+        try:
+            # this is done so that it doesn't pass over the given profiles
+            if current_crypto_index >= len(profiles):
+                current_crypto_index=0
             # this is done so that you can add profiles folder in real time
             profile = profiles[current_crypto_index]
             print('Current Profiles: '+ profile)
             ad_viewer(profile)
             current_crypto_index = current_crypto_index+1
-            # this is done so that you can add profiles folder in real time
-            if current_crypto_index >= len(profiles):
-                current_crypto_index=0
-        # # this code skips the faulty profile
-        # except:
-        #     current_crypto_index = current_crypto_index+1
-        #     logger('Program Stopped','Restarting','10',profile)
-        #     wait(10)
-        #     os.system("taskkill /f /im  Firefox.exe >nul 2>&1")
-        #     clear_cache()
+        # this code skips the faulty profile
+        except Exception as E:
+            print(E)
+            current_crypto_index = current_crypto_index+1
+            logger(str(E),'Restarting','10',profile)
+            wait(10)
+            os.system("taskkill /f /im  Firefox.exe >nul 2>&1")
+            #clear_cache()
             
 if __name__ == "__main__":
     runner()
