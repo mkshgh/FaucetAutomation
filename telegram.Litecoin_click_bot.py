@@ -12,7 +12,9 @@ from glob import glob
 from subprocess import Popen
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
-
+import keyboard
+from keyboard import press
+press('enter')
 """ Not used now """
 # from fake_useragent import UserAgent
 # from urllib.parse import unquote
@@ -21,9 +23,6 @@ from selenium.webdriver.common.action_chains import ActionChains
 # from selenium.common.exceptions import NoSuchElementException
 # from selenium.webdriver.support.ui import WebDriverWait
 # from selenium.webdriver.support import expected_conditions as EC
-# import keyboard
-# from keyboard import press
-# press('enter')
 # to remove the popup if exists
 
 
@@ -36,11 +35,10 @@ from selenium.webdriver.common.action_chains import ActionChains
 CURRENT_DIR = os.getcwd()
 BASE_URL = "https://web.telegram.org/z/"
 # put all the profile in the profiles folder
-PROFILE_DIR = 'C:\\pyteleclick\\profiles\\'
+PROFILE_DIR = 'profiles'
 LINK_START = "tg://unsafe_url?url="
 IMP_DELAY = 10
 profiles = glob(PROFILE_DIR+'/*/')
-
 
 # Initialize the driver object
 def get_driver(profile):
@@ -52,7 +50,7 @@ def get_driver(profile):
         Instance of the new browser
     """  
     options = FirefoxOptions()
-    options.add_argument("--headless")
+    #options.add_argument("--headless")
     fp = webdriver.FirefoxProfile(profile)
     teleminebot = webdriver.Firefox(firefox_profile=fp,options=options)
     teleminebot.maximize_window()
@@ -73,19 +71,20 @@ def open_link_in_chrome(money_link,temp_link,main_tab):
         link is openeed in the default browser of your manchine.
         I use the Brave so, Brave.exe is closed here.
     """  
+    wait(5)
     view_time = 0
     webbrowser.open(money_link)
     while  money_link==temp_link:
-        view_time = view_time+15
+        view_time = view_time+5
         money_link = get_money_link(main_tab)
-        print('adding 15s to the loop: '+str(view_time))
-        wait(15)
+        print('adding 5s to the loop: '+str(view_time))
+        wait(5)
         if view_time>120:
             temp_link=''
+            click_skip_link(main_tab)
             break
     try:
         os.system("taskkill /f /im  Brave.exe >nul 2>&1")
-        print('Browser closed')
     except:
         pass
     return view_time
@@ -104,10 +103,9 @@ def logger(text,money_link,view_time,profile):
     current_time = datetime.datetime.now()
     logs_time = "{}_{}_{}".format(str(current_time.year),str(current_time.month),str(current_time.day))
     logs_file = os.path.join('logs',(logs_time+"_logs.txt")) 
-    f = open(logs_file, "a+")
-    logs_write='['+profile+'] : ' + str(datetime.datetime.now())+ " > " + text + ' '+ str(money_link) + " for "+str(view_time)+'s\n'
-    f.write(logs_write)
-    f.close()
+    with open(logs_file, "a+",encoding="utf-8") as f:
+        logs_write='['+profile+'] : ' + str(datetime.datetime.now())+ " > " + str(text) + ' '+ str(money_link) + " for "+str(view_time)+'s\n'
+        f.write(logs_write)
     print(logs_write)
 
 def get_money_link(main_tab):
@@ -119,13 +117,23 @@ def get_money_link(main_tab):
         link to browse
     """ 
     # Keep clicking the button forever and make money
-    main_tab.find_element(By.XPATH,'(//button[text()="🔎 Go to website"])[last()]').click()
+    main_tab.find_element(By.XPATH,'(//button[starts-with(text(),"🔎 Go to website")])[last()]').click()
     wait(2)
     money_link:str = main_tab.find_element(By.XPATH,'(//div[@class="modal-content custom-scroll"])[last()]/a').get_attribute("href")
     ActionChains(main_tab).send_keys(Keys.ESCAPE).perform()
     wait(1)
     return money_link
 
+def click_skip_link(main_tab):
+    """ 
+    Description: Skip the faulty ad
+    Input: 
+        main_tab: <current tab instance>
+    Output:
+        Click the last skip link
+    """ 
+    # Keep clicking the button forever and make money
+    main_tab.find_element(By.XPATH,'(//button[text()="⏩ Skip"])[last()]').click()
 
 def click_the_channel(main_tab):
     """ 
@@ -146,25 +154,22 @@ def ads_status(main_tab):
     Output:
         the status of the ad: 'nomoreads','visitwebsitenow','usedbyothers',etc
     """
-    last_message = main_tab.find_element(By.XPATH,"(//div[@class='message-date-group'][2]/div)[last()]").get_attribute('innerHTML')
+    last_message = main_tab.find_element(By.XPATH,"(//div[@class='message-date-group'][last()]/div)[last()]").get_attribute('innerHTML')
     not_loaded = 1
     while not_loaded:
         try:
             if ('Sorry, there are no new ads available.' in last_message):
                 return "nomoreads"
-                print('No more ads')
             if ('Go to website' in last_message):
                 return "visitwebsitenow"
-                print('Visit sites now')
             if ('Visit sites' in last_message):
                 print('wait 5s until the ads load')
                 wait(5)
-                last_message = main_tab.find_element(By.XPATH,"(//div[@class='message-date-group'][2]/div)[last()]").get_attribute('innerHTML')
+                last_message = main_tab.find_element(By.XPATH,"(//div[@class='message-date-group'][last()]/div)[last()]").get_attribute('innerHTML')
             else:
-                return 'usedbyothers'
+                return 'nomoreads'
         except:
-            pass
-    return 1
+            return 'nomoreads'
 
 def page_loaded(main_tab):
     """ 
@@ -192,7 +197,6 @@ def page_loaded(main_tab):
 
 def clear_cache():
     p = Popen("freeTemp.bat", cwd=r"C:\\pyteleclick\\")
-
 
 def click_visit_site(main_tab):
     """ 
@@ -229,7 +233,7 @@ def ad_viewer(profile):
     main_tab = get_driver(profile)
     print(profile)
     profile = profile.split('\\')[-2]
-    print('['+profile+ '] : ' +'Getting the browser ready\n')
+    print('['+profile+'] : ' +'Getting the browser ready\n')
     main_tab.get(BASE_URL)
     # wait(main_tab) to load
     # wait for the main_tab to load
@@ -239,14 +243,18 @@ def ad_viewer(profile):
     view_time=15
     temp_link=''
     stop=1
+    try:
+        main_tab.find_element(By.XPATH, "//button/i[@class='icon-arrow-down']").click()
+    except:
+        pass
     wait(5)
-            
+    click_visit_site(main_tab)
+    wait(5)       
     while stop:
         # click the visit site to get the link
-        click_visit_site(main_tab)
-        wait(5)
         status_of_ads = ads_status(main_tab)
         if status_of_ads=='nomoreads':
+            logger('No more ads','Restarting','10',profile)
             stop = 0
             main_tab.quit()
             wait(1)
@@ -254,12 +262,16 @@ def ad_viewer(profile):
         else:
             # links status from the url
             money_link=get_money_link(main_tab)
+            wait(2)
             view_time = open_link_in_chrome(money_link,temp_link,main_tab)
-            logger('Visited Website',money_link,view_time,profile)
+            if view_time!=0:
+                logger('Visited Website',money_link,view_time,profile)
+                print('Closing Browser')
+
             view_time = 15
             temp_link=money_link
+            wait(2)
     main_tab.quit()
-
 
 def runner():
     # check if new ads are avialable
@@ -276,7 +288,7 @@ def runner():
             current_crypto_index = current_crypto_index+1
         # this code skips the faulty profile
         except Exception as E:
-            print(E)
+            print(str(E))
             current_crypto_index = current_crypto_index+1
             logger(str(E),'Restarting','10',profile)
             wait(10)
