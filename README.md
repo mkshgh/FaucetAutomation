@@ -28,7 +28,5 @@ Automate the process of claiming faucets as many popular ones as i can
 
 Package              Version
 -------------------- ----------
-selenium             3.141.0
-PyAutoGUI            0.9.52
-keyboard             0.13.5
-browser-history      0.3.1
+- selenium             3.141.0
+- keyboard             0.13.5
