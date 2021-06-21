@@ -23,3 +23,12 @@ Automate the process of claiming faucets as many popular ones as i can
 - Captcha automation for free.
 - Run the program once every 23 hours before the claiming needs to be done.
 - Email or SMS notification when the money is above your required faucet claim value.
+
+## Packages Used
+
+Package              Version
+-------------------- ----------
+selenium             3.141.0
+PyAutoGUI            0.9.52
+keyboard             0.13.5
+browser-history      0.3.1
