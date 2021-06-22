@@ -12,10 +12,7 @@ from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from glob import glob
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
-from browser_history.browsers import Brave
-import keyboard
-import pyautogui
-
+# from browser_history.browsers import Brave
 """ Not used now """
 # imports
 # from fake_useragent import UserAgent
@@ -23,10 +20,12 @@ import pyautogui
 # from typing import Any
 # import requests
 # from pywinauto import Application
+# import keyboard
 # from subprocess import Popen
 # from selenium.common.exceptions import NoSuchElementException
 # from selenium.webdriver.support.ui import WebDriverWait
 # from selenium.webdriver.support import expected_conditions as 
+# import pyautogui
 
 # functions
 # from keyboard import press
@@ -56,23 +55,24 @@ import pyautogui
 
 # def get_redirect_url_from_browser_history(transit_url,wait_time=12):
 #     """ 
-#     Description: get the url of the given messsage bot
+#     Description: get the url of the given messsage bot given xtab is installed and only one tab is opened at a time
 #     Input: 
 #         transit_url: Url which will redirect to the new url
 #         wait_time: Time in seconds to wait for the redirect
 #     Output:
 #         Final url from your desired browser, I use brave by default 
 #     """ 
-#     bot_url = transit_url
-#     pyautogui.click(x=213,y=1063,clicks=2)
-#     webbrowser.get().open(bot_url)
-#     wait(wait_time)
-#     pyautogui.click(x=1894, y=13)
+#     test_url = 'mghimire.com.np'
 #     # 
-#     wait_time=wait_time+5
+#     webbrowser.get().open(transit_url)
+#     wait(2)
+#     webbrowser.get().open(test_url)
+#     wait(1)
+#     close_browser_by_name()
+#     wait(1)
 #     bot_url = Brave().fetch_history().histories[-1][-1]
 #     # 
-#     if 'doge.click' in bot_url:
+#     if transit_url or test_url in bot_url:
 #         get_redirect_url_from_browser_history(transit_url,wait_time=wait_time)
 #     else:
 #         return bot_url
@@ -85,6 +85,7 @@ import pyautogui
 # alternativ_bot_channel_div = '//div[@class="ListItem chat-item-clickable search-result no-selection"][1]'
 # telegram_last_message_area = "(//div[@class='message-date-group'][last()]/div)[last()]/a"
 
+ltc_all_channels='//div[@class="ripple-container"]//ancestor::div[@class="ListItem-button"]'
 telegram_last_message_area = "(//div[@class='message-date-group'][last()]/div)[last()]"
 ltc_channel_button = '//div[@class= "scroll-container"]//h3[text() ="LTC Click Bot"]/../../../..'
 ltc_channel_command_input_field = '//div[@id="editable-message-text"]'
@@ -139,7 +140,7 @@ def click_this_element(main_tab,element_to_click):
     main_tab.find_element(By.XPATH,element_to_click).click()
 
 
-def click_when_loaded(main_tab,element_to_click,refresh_time=2,ttr=60,max_retries=1,refresh=False):
+def click_when_loaded(main_tab,element_to_click,refresh_time=2,ttr=20,max_retries=1,refresh=False):
     """ 
     Description: click the given element when loaded
     Input: 
@@ -188,7 +189,7 @@ def get_text_of_element(main_tab, element):
     """
     return main_tab.find_element(By.XPATH,element).text
 
-def close_brave_browser():
+def close_browser_by_name(browserName='Brave.exe'):
     """ 
     Description: Get the text from the given element
     Input: 
@@ -197,7 +198,7 @@ def close_brave_browser():
         Force closes the browser if opened
     """
     try:
-        os.system("taskkill /f /im  Brave.exe >nul 2>&1")
+        os.system("taskkill /f /im  {} >nul 2>&1".format(browserName))
     except:
         pass
 
@@ -318,29 +319,22 @@ def open_link_until_make_money(money_link,main_tab):
             return "VisitedSite"
             
 
-
-def get_redirect_url_from_browser_history(transit_url,wait_time=12):
-    """ 
-    Description: get the url of the given messsage bot
-    Input: 
-        transit_url: Url which will redirect to the new url
-        wait_time: Time in seconds to wait for the redirect
+def click_loc_xy(main_tab, x, y, left_click=True):
+    """
+    Input:
+        dr:browser
+        x:page x coordinate
+        y:page y coordinate
+        left_click:true is the left mouse click.
+        Otherwise right click
     Output:
-        Final url from your desired browser, I use brave by default 
-    """ 
-    bot_url = transit_url
-    pyautogui.click(x=213,y=1063,clicks=2)
-    webbrowser.get().open(bot_url)
-    wait(wait_time)
-    pyautogui.click(x=1894, y=13)
-    # 
-    wait_time=wait_time+5
-    bot_url = Brave().fetch_history().histories[-1][-1]
-    # 
-    if 'doge.click' in bot_url:
-        get_redirect_url_from_browser_history(transit_url,wait_time=wait_time)
+        Clicks right or left at the given position
+    """
+    if left_click:
+        ActionChains(main_tab).move_by_offset(x, y).click().perform()
     else:
-        return bot_url
+        ActionChains(main_tab).move_by_offset(x, y).context_click().perform()
+    ActionChains(main_tab).move_by_offset(-x, -y).perform() #Restore the mouse position to before moving
 
 
 def forward_this_message(main_tab,channel='new'):
@@ -366,14 +360,22 @@ def forward_this_message(main_tab,channel='new'):
         # searchbox
     if channel=='self':
         bot_channel="LTC_CLICK_BOT"
+        click_when_loaded(main_tab,ltc_setting_btn)
+        click_when_loaded(main_tab,ltc_select_btn)
+        # if unable to find the last element after selecting the item, and it keeps happening somehow
+        if click_when_loaded(main_tab,ltc_last_message,ttr=2)=='element_not_found':
+            # click on the center of the webapge and hope it clicks something
+            window_x = main_tab.get_window_size()['width']/2
+            window_y = main_tab.get_window_size()['height']/2
+            click_loc_xy(main_tab,window_x,window_y)
     else:
         click_when_loaded(main_tab,ltc_last_message_link)
         click_when_loaded(main_tab,bot_channel_start_btn,ttr=10)
         # name of the channel
-    bot_channel = get_text_of_element(main_tab,bot_channel_name)
-    click_when_loaded(main_tab,ltc_setting_btn)
-    click_when_loaded(main_tab,ltc_select_btn)
-    click_when_loaded(main_tab,ltc_last_message)
+        bot_channel = get_text_of_element(main_tab,bot_channel_name)
+        click_when_loaded(main_tab,ltc_setting_btn)
+        click_when_loaded(main_tab,ltc_select_btn)
+        click_when_loaded(main_tab,ltc_last_message)
     click_when_loaded(main_tab,bot_forward_button)
     click_when_loaded(main_tab,bot_ltc_channel_button)
     click_when_loaded(main_tab,bot_ltc_send_button)
@@ -392,6 +394,7 @@ def visit_link_for_time(intial_url,wait_time=12):
     """ 
     webbrowser.open(intial_url)
     wait(wait_time)
+    close_browser_by_name()
 
 
 def message_bot(main_tab,profile):
@@ -432,21 +435,23 @@ def message_bot(main_tab,profile):
             # forward the actuall needed channeld link
             bot_channel_name = forward_this_message(main_tab,channel='new')
             wait(2)
+            # open bots command again
             send_command(main_tab,ltc_channel_command_input_field,'/bots')
             wait(2)
             toc = time.perf_counter()
             logger('MessageBot',bot_channel_name,round(toc-tic,2),profile)
             wait(2)
-            if bot_link == get_href_from_popup(main_tab,ltc_message_bot_button_last_seen,ltc_money_link_element):
-                try:
+            # check if the last message has message button in it
+            try:
+                if bot_link == get_href_from_popup(main_tab,ltc_message_bot_button,ltc_money_link_element):
                     wait(2) 
                     click_when_loaded(main_tab,ltc_skip_button)
                     wait(2)
                     toc = time.perf_counter()
                     logger("SkippedAds",bot_channel_name,round(toc-tic,2),profile)
                     wait(2)
-                except:
-                    pass
+            except:
+                pass
                     
 
 def visit_website(main_tab,profile):
@@ -479,7 +484,7 @@ def visit_website(main_tab,profile):
                 wait(2)
                 webbrowser.open(money_link)
                 adsStatus = open_link_until_make_money(money_link,main_tab)
-                close_brave_browser()
+                close_browser_by_name()
                 toc = time.perf_counter()
                 logger(adsStatus,money_link,round(toc-tic,2),profile)
                 print('Closing Browser')
@@ -488,10 +493,7 @@ def visit_website(main_tab,profile):
             print(str(E))
             toc = time.perf_counter()
             logger('error',str(E),'10',profile)            
-            try:
-                os.system("taskkill /f /im  Brave.exe >nul 2>&1")
-            except:
-                pass
+            close_browser_by_name()
             visit_website_stop = 0
 
 
@@ -542,7 +544,7 @@ def runner():
             current_crypto_index = current_crypto_index+1
             logger('error',str(E),'10',profile)
             wait(10)
-            os.system("taskkill /f /im  Firefox.exe >nul 2>&1")
+            close_browser_by_name(browserName='Firefox.exe')
             #clear_cache()
             
 if __name__ == "__main__":
