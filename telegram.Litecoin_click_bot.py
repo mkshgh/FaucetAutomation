@@ -337,6 +337,48 @@ def click_loc_xy(main_tab, x, y, left_click=True):
     ActionChains(main_tab).move_by_offset(-x, -y).perform() #Restore the mouse position to before moving
 
 
+def bot_delete_all_channel(main_tab,leave_top=5):
+    """ 
+    Description: Skip the faulty ad
+    Input: 
+        main_tab: <current tab instance>
+        leave_top: how many channels to spare at the top
+    Output:
+        Click the last given element
+    """ 
+    all_channel_links = main_tab.find_elements_by_class_name('ListItem-button')
+    total_channels = len(all_channel_links)
+    while total_channels>leave_top:
+        i=0
+        try:
+            for link in all_channel_links:
+                    i=i+1
+                    if i<leave_top:
+                        print('Skipping Chanel: ',i)
+                    elif i<leave_top+6:
+                        # channel_to_delete
+                        delete_channel_button = "//div[@class='MenuItem destructive']"
+                        confirm_delete_button = "//button[@class='Button confirm-dialog-button default danger text'][1]"
+                        # right click button
+                        actionChains = ActionChains(main_tab)
+                        actionChains.move_to_element(link).perform()
+                        actionChains.context_click().perform()
+                        # delete button
+                        click_when_loaded(main_tab,delete_channel_button,ttr=4)
+                        # confirm delete button
+                        click_when_loaded(main_tab,confirm_delete_button,ttr=4)
+                        print('deleted channel: ', i)
+        except:
+            pass
+        # Refresh the page and check for the 
+        main_tab.refresh()
+        wait(2)
+        ActionChains(main_tab).send_keys(Keys.ESCAPE).perform()
+        wait(2)
+        all_channel_links = main_tab.find_elements_by_class_name('ListItem-button')
+        total_channels = len(all_channel_links)
+
+
 def forward_this_message(main_tab,channel='new'):
     """ 
     Description: get the url of the given messsage bot
@@ -360,22 +402,22 @@ def forward_this_message(main_tab,channel='new'):
         # searchbox
     if channel=='self':
         bot_channel="LTC_CLICK_BOT"
-        click_when_loaded(main_tab,ltc_setting_btn)
-        click_when_loaded(main_tab,ltc_select_btn)
-        # if unable to find the last element after selecting the item, and it keeps happening somehow
-        if click_when_loaded(main_tab,ltc_last_message,ttr=2)=='element_not_found':
-            # click on the center of the webapge and hope it clicks something
-            window_x = main_tab.get_window_size()['width']/2
-            window_y = main_tab.get_window_size()['height']/2
-            click_loc_xy(main_tab,window_x,window_y)
+        
     else:
         click_when_loaded(main_tab,ltc_last_message_link)
         click_when_loaded(main_tab,bot_channel_start_btn,ttr=10)
         # name of the channel
         bot_channel = get_text_of_element(main_tab,bot_channel_name)
-        click_when_loaded(main_tab,ltc_setting_btn)
-        click_when_loaded(main_tab,ltc_select_btn)
-        click_when_loaded(main_tab,ltc_last_message)
+        
+    # click the settings button 
+    click_when_loaded(main_tab,ltc_setting_btn)
+    click_when_loaded(main_tab,ltc_select_btn)
+    # if unable to find the last element after selecting the item, and it keeps happening somehow
+    if click_when_loaded(main_tab,ltc_last_message,ttr=2)=='element_not_found':
+        # click on the center of the webapge and hope it clicks something
+        window_x = main_tab.get_window_size()['width']/2
+        window_y = main_tab.get_window_size()['height']/2
+        click_loc_xy(main_tab,window_x,window_y)
     click_when_loaded(main_tab,bot_forward_button)
     click_when_loaded(main_tab,bot_ltc_channel_button)
     click_when_loaded(main_tab,bot_ltc_send_button)
@@ -506,6 +548,7 @@ def ppc_viewer(profile):
     Output:
         Keeps clicking the ads forever
     """
+    # check today
     # start the browser and go to the main page
     print(profile)
     main_tab = get_driver(profile)
@@ -521,6 +564,7 @@ def ppc_viewer(profile):
     wait(5)    
     message_bot(main_tab,profile)
     visit_website(main_tab,profile)
+    bot_delete_all_channel(main_tab)
     main_tab.quit()
 
 
