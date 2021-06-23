@@ -7,7 +7,7 @@ import time
 import os
 from selenium.webdriver.common.by import By
 import webbrowser
-import datetime
+from datetime import datetime
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from glob import glob
 from selenium.webdriver.common.keys import Keys
@@ -139,6 +139,21 @@ def click_this_element(main_tab,element_to_click):
     """ 
     main_tab.find_element(By.XPATH,element_to_click).click()
 
+def is_time_in_range(start_time:int,end_time:int,current_time=int(datetime.now().strftime("%H"))):
+    """ 
+    Description: check if the given hour is between the given range of hour
+    Input: 
+        curret_time: time in hour 1-23 integer
+                    - it is the current hour by default
+        start_time: lower time limit 1-23 integer
+        end_time: upper time limit  1-23 integer
+    Output:
+        Click the last given element
+    """ 
+    if start_time<current_time<end_time:
+        return 1
+    else:
+        return 0
 
 def click_when_loaded(main_tab,element_to_click,refresh_time=2,ttr=20,max_retries=1,refresh=False):
     """ 
@@ -231,11 +246,11 @@ def logger(text,money_link,view_time,profile):
     Output:
         The log is written in logs.txt
     """ 
-    current_time = datetime.datetime.now()
+    current_time = datetime.now()
     logs_time = "{}_{}_{}_{}".format(str(current_time.year),str(current_time.month),str(current_time.day),text)
     logs_file = os.path.join('logs',(logs_time+"_logs.txt")) 
     with open(logs_file, "a+",encoding="utf-8") as f:
-        logs_write='['+profile+'] , ' + str(datetime.datetime.now())+ " , " + str(text) + ', '+ str(money_link) + " , "+str(view_time)+'s\n'
+        logs_write='['+profile+'] , ' + str(datetime.now())+ " , " + str(text) + ', '+ str(money_link) + " , "+str(view_time)+'s\n'
         f.write(logs_write)
     print(logs_write)
 
@@ -564,7 +579,10 @@ def ppc_viewer(profile):
     wait(5)    
     message_bot(main_tab,profile)
     visit_website(main_tab,profile)
-    bot_delete_all_channel(main_tab)
+    # delete channels between the given time interval only
+    if is_time_in_range(14,16):
+        bot_delete_all_channel(main_tab)
+    
     main_tab.quit()
 
 
