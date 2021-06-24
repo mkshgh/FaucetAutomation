@@ -12,7 +12,7 @@ from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from glob import glob
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
-# from browser_history.browsers import Brave
+from browser_history.browsers import Brave
 """ Not used now """
 # imports
 # from fake_useragent import UserAgent
@@ -25,7 +25,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 # from selenium.common.exceptions import NoSuchElementException
 # from selenium.webdriver.support.ui import WebDriverWait
 # from selenium.webdriver.support import expected_conditions as 
-# import pyautogui
+import pyautogui
 
 # functions
 # from keyboard import press
@@ -53,7 +53,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 #     except:
 #         return 0
 
-# def get_redirect_url_from_browser_history(transit_url,wait_time=12):
+# def get_final_url_from_browser_history(transit_url,wait_time=12):
 #     """ 
 #     Description: get the url of the given messsage bot given xtab is installed and only one tab is opened at a time
 #     Input: 
@@ -62,38 +62,43 @@ from selenium.webdriver.common.action_chains import ActionChains
 #     Output:
 #         Final url from your desired browser, I use brave by default 
 #     """ 
-#     test_url = 'mghimire.com.np'
+#     test_url = 'www.mghimire.com.np'
 #     # 
 #     webbrowser.get().open(transit_url)
+#     wait(wait_time)
+#     webbrowser.get().open_new_tab(test_url)
 #     wait(2)
-#     webbrowser.get().open(test_url)
-#     wait(1)
 #     close_browser_by_name()
 #     wait(1)
 #     bot_url = Brave().fetch_history().histories[-1][-1]
 #     # 
-#     if transit_url or test_url in bot_url:
-#         get_redirect_url_from_browser_history(transit_url,wait_time=wait_time)
-#     else:
-#         return bot_url
-
+#     # if transit_url or test_url in bot_url:
+#     #     get_final_url_from_browser_history(transit_url,wait_time=wait_time+5)
+#     # else:
+#     return bot_url
 # variables
-# bot_search_box = "//input[@id='telegram-search-input']" 
 # bot_channel_setting_btn = "//div[@class='header-tools']//child::button[@class='Button smaller translucent round has-ripple']"
 # bot_channel_select_message_btn = "//div[@class='bubble menu-container custom-scroll top right opacity-transition fast open shown']//child::i[@class='icon-select']/.."
-# search_bot_channel_div = "//child::span[contains(text(),'{}')]//ancestor::div[@class='ListItem-button']".format(channel_tag)
-# alternativ_bot_channel_div = '//div[@class="ListItem chat-item-clickable search-result no-selection"][1]'
 # telegram_last_message_area = "(//div[@class='message-date-group'][last()]/div)[last()]/a"
+# ltc_join_channel_button_last_seen ='(//button[starts-with(text(),"🔎 Go to channel")])[last()]'
 
 ltc_all_channels='//div[@class="ripple-container"]//ancestor::div[@class="ListItem-button"]'
 telegram_last_message_area = "(//div[@class='message-date-group'][last()]/div)[last()]"
 ltc_channel_button = '//div[@class= "scroll-container"]//h3[text() ="LTC Click Bot"]/../../../..'
 ltc_channel_command_input_field = '//div[@id="editable-message-text"]'
 ltc_visit_website_button = '(//button[starts-with(text(),"🔎 Go to website")])[last()]'
-ltc_money_link_element = '(//div[@class="modal-content custom-scroll"])[last()]/a'
+
+ltc_last_popup_link = '(//div[@class="modal-content custom-scroll"])[last()]/a'
 ltc_skip_button = '(//button[text()="⏩ Skip"])[last()]'
 ltc_message_bot_button = "//div[@class='message-date-group']/div[last()]//child::button[contains(text(),'Message bot')]"
 ltc_message_bot_button_last_seen ='(//button[starts-with(text(),"✉️ Message bot")])[last()]'
+
+ltc_join_channel_button = "//div[@class='message-date-group']/div[last()]//child::button[contains(text(),'Go to channel')]"
+ltc_join_group_button = "//div[@class='message-date-group']/div[last()]//child::button[contains(text(),'Go to group')]"
+ltc_channel_joined_button = '(//button[starts-with(text(),"✅ Joined")])[last()]'
+
+bot_channel_start_btn = "//button[@class='Button tiny primary fluid has-ripple']"
+bot_channel_name = "//div[@class='chat-info-wrapper']//child::h3"
 
 # To do :
 # - Join the channels bots
@@ -107,7 +112,7 @@ PROFILE_DIR = 'profiles'
 LINK_START = "tg://unsafe_url?url="
 IMP_DELAY = 10
 profiles = glob(PROFILE_DIR+'/*/')
-
+LTC_CHANNEL_ID='Litecoin_click_bot'
 # Initialize the driver object
 def get_driver(profile):
     """ 
@@ -138,6 +143,31 @@ def click_this_element(main_tab,element_to_click):
         Click the last given element
     """ 
     main_tab.find_element(By.XPATH,element_to_click).click()
+
+    
+def get_final_url_from_browser_history(transit_url,wait_time=12):
+    """ 
+    Description: get the url of the given messsage bot given xtab is installed and only one tab is opened at a time
+    Input: 
+        transit_url: Url which will redirect to the new url
+        wait_time: Time in seconds to wait for the redirect
+    Output:
+        Final url from your desired browser, I use brave by default 
+    """ 
+    test_url = 'www.mghimire.com.np'
+    # 
+    pyautogui.doubleClick(x=218, y=1061)
+    wait(2)
+    webbrowser.get().open(transit_url)
+    wait(wait_time)
+    pyautogui.click(x=1903, y=15)
+    wait(1)
+    bot_url = Brave().fetch_history().histories[-1][-1]
+    # 
+    # if transit_url or test_url in bot_url:
+    #     get_final_url_from_browser_history(transit_url,wait_time=wait_time+5)
+    # else:
+    return bot_url
 
 def is_time_in_range(start_time:int,end_time:int,current_time=int(datetime.now().strftime("%H"))):
     """ 
@@ -174,7 +204,7 @@ def click_when_loaded(main_tab,element_to_click,refresh_time=2,ttr=20,max_retrie
     while not_loaded:
         if max_retries<=0:
             not_loaded=0
-            return "element_not_found"
+            return "element_not_loaded"
         if view_time>ttr:
             view_time=0
             if refresh:
@@ -183,7 +213,7 @@ def click_when_loaded(main_tab,element_to_click,refresh_time=2,ttr=20,max_retrie
                 max_retries = max_retries-1
                 wait(2)
             else:
-                return 'element_not_found'
+                return 'element_not_loaded'
         try:
             main_tab.find_element(By.XPATH,element_to_click).click()
             not_loaded=0
@@ -262,7 +292,7 @@ def ads_status(main_tab,last_message_area):
         main_tab: <current tab instance>
         last_message_area: the area where you want to check the status
     Output:
-        the status of the ad: 'NoMoreAds','VisitedSite','messagebotnow',etc
+        the status of the ad: 'NoMoreAds','VisitedSite','messagebotnow','JoinGroup',etc
     """
     last_message = main_tab.find_element(By.XPATH,last_message_area).get_attribute('innerHTML')
     not_loaded = 1
@@ -276,6 +306,10 @@ def ads_status(main_tab,last_message_area):
                 return "RetryMessageBot"
             if ('Message bot' in last_message):
                 return "MessageBot"
+            if ('Go to channel' in last_message):
+                return "JoinChannel"
+            if ('Go to group' in last_message):
+                return "JoinGroup"
             if ('Visit sites' in last_message):
                 print('wait 5s until the ads load')
                 wait(5)
@@ -296,7 +330,7 @@ def send_command(main_tab,command_area,text_command):
     Output:
         removes any previous command and types/sends the command
     """
-    click_when_loaded(main_tab,command_area,refresh=True)
+    click_when_loaded(main_tab,command_area)
     input = main_tab.find_element(By.XPATH,command_area)
     # Click the button to visit sites
     input.send_keys(Keys.CONTROL + "a")
@@ -321,7 +355,7 @@ def open_link_until_make_money(money_link,main_tab):
         last_message = main_tab.find_element(By.XPATH,telegram_last_message_area).get_attribute('innerHTML')
         if ('Sorry, there are no new ads available.' in last_message):
             return  "NoMoreAds"
-        elif money_link == get_href_from_popup(main_tab,ltc_visit_website_button,ltc_money_link_element):
+        elif money_link == get_href_from_popup(main_tab,ltc_visit_website_button,ltc_last_popup_link):
             print('adding 5s to the loop: '+str(view_time))
             wait(5)
             view_time = view_time+5
@@ -398,14 +432,18 @@ def forward_this_message(main_tab,channel='new'):
     """ 
     Description: get the url of the given messsage bot
     Input: 
-        channel: 'self' if forward to same channel else 'new' by default
+        channel: 
+        -   'new' if forward from a new message group default
+        -   'self' if forward to same channel
+        -   'subscribe' if subscribing to new channel
+
         main_tab <current tab instance>
     Output:
         Message forwarded to where you want
     """ 
     #Forward the message variables
     bot_channel_name = "//div[@class='chat-info-wrapper']//child::h3"
-    bot_channel_start_btn = "//div[@class='header-tools']//child::button[@class='Button tiny primary fluid has-ripple']"
+    bot_channel_start_btn = "//button[@class='Button tiny primary fluid has-ripple']"
     ltc_last_message = "//div[@class='message-date-group']/div[last()]"
     bot_forward_button = "//div[@class='MessageSelectToolbar-inner']//child::i[@class='icon-forward']/.."
     bot_ltc_channel_button = "//div[@class='modal-dialog']//child::h3[text()='LTC Click Bot']//ancestor::div[@class='ListItem-button']"
@@ -413,26 +451,33 @@ def forward_this_message(main_tab,channel='new'):
     ltc_last_message_link = "(//div[@class='message-date-group'][last()]/div)[last()]//a"
     ltc_setting_btn= "//div[@class='HeaderActions']//i[@class='icon-more']/.."
     ltc_select_btn= "//div[@class='bubble menu-container custom-scroll top right opacity-transition fast open shown']//i[@class='icon-select']/.."
+    window_x = main_tab.get_window_size()['width']/2
+    window_y = main_tab.get_window_size()['height']
+
+
+    
     # try:    
         # searchbox
     if channel=='self':
         bot_channel="LTC_CLICK_BOT"
         
-    else:
+    elif channel=='new':
         click_when_loaded(main_tab,ltc_last_message_link)
         click_when_loaded(main_tab,bot_channel_start_btn,ttr=10)
         # name of the channel
         bot_channel = get_text_of_element(main_tab,bot_channel_name)
-        
+    
+    elif channel=='subscribe':
+        click_when_loaded(main_tab,bot_channel_start_btn,ttr=10)
+        bot_channel=get_text_of_element(main_tab,bot_channel_name)
     # click the settings button 
     click_when_loaded(main_tab,ltc_setting_btn)
     click_when_loaded(main_tab,ltc_select_btn)
     # if unable to find the last element after selecting the item, and it keeps happening somehow
-    if click_when_loaded(main_tab,ltc_last_message,ttr=2)=='element_not_found':
+    if click_when_loaded(main_tab,ltc_last_message,ttr=4)=='element_not_loaded':
         # click on the center of the webapge and hope it clicks something
-        window_x = main_tab.get_window_size()['width']/2
-        window_y = main_tab.get_window_size()['height']/2
-        click_loc_xy(main_tab,window_x,window_y)
+        click_loc_xy(main_tab,window_x,int(0.5*window_y))
+
     click_when_loaded(main_tab,bot_forward_button)
     click_when_loaded(main_tab,bot_ltc_channel_button)
     click_when_loaded(main_tab,bot_ltc_send_button)
@@ -453,6 +498,29 @@ def visit_link_for_time(intial_url,wait_time=12):
     wait(wait_time)
     close_browser_by_name()
 
+    
+def search_and_goto_channel_by_name(main_tab,channel_name):
+    """ 
+    Description: Pay per click for LTC BOT
+    Input: 
+        channel_name: Name of telegram_channel_name you want to join
+        main_tab: <Location of main_tab instance>
+    Output:
+        Keeps clicking the ads forever
+    """
+    bot_search_box = "//input[@id='telegram-search-input']" 
+    search_bot_channel_div = "//child::span[contains(text(),'{}')]//ancestor::div[@class='ListItem-button']".format(channel_name)
+    alternative_bot_channel_div = '//div[@class="ListItem chat-item-clickable search-result no-selection"][1]'
+    cache_LTC_Channel_Link_div = '//div[@class="search-section"][1]//div[@class="ListItem chat-item-clickable search-result no-selection"][1]'
+    cache_LTC_Channel_Link_div_primary = '//div[@class="PickerSelectedItem"][1]'
+    send_command(main_tab,bot_search_box,channel_name)
+    wait(2)
+    if channel_name=="Litecoin_click_bot":
+        click_when_loaded(main_tab,cache_LTC_Channel_Link_div)
+            
+    elif click_when_loaded(main_tab,search_bot_channel_div,ttr=4)=='element_not_loaded':
+        click_when_loaded(main_tab,alternative_bot_channel_div)
+        
 
 def message_bot(main_tab,profile):
     """ 
@@ -471,18 +539,15 @@ def message_bot(main_tab,profile):
         #  the visit site to get the link
         tic = time.perf_counter()
         status_of_ads = ads_status(main_tab,telegram_last_message_area)
-
+        
         if status_of_ads=='NoMoreAds':
             logger('NoMoreAds','Restarting','10',profile)
             visit_message_bot_stop = 0
             return 1
-
-        elif status_of_ads=='RetryMessageBot':
-            forward_this_message(main_tab,channel='new')
-
+        
         elif status_of_ads=='MessageBot':
             # links status from the visit website button
-            bot_link=get_href_from_popup(main_tab,ltc_message_bot_button,ltc_money_link_element)
+            bot_link=get_href_from_popup(main_tab,ltc_message_bot_button,ltc_last_popup_link)
             wait(2)
             # visit website for compliance of the offer
             visit_link_for_time(bot_link)
@@ -500,7 +565,7 @@ def message_bot(main_tab,profile):
             wait(2)
             # check if the last message has message button in it
             try:
-                if bot_link == get_href_from_popup(main_tab,ltc_message_bot_button,ltc_money_link_element):
+                if bot_link == get_href_from_popup(main_tab,ltc_message_bot_button,ltc_last_popup_link):
                     wait(2) 
                     click_when_loaded(main_tab,ltc_skip_button)
                     wait(2)
@@ -512,7 +577,7 @@ def message_bot(main_tab,profile):
                     
 
 def visit_website(main_tab,profile):
-        # Start Vsiting the website first
+    # Start Vsiting the website first
     """ 
     Description: Visit website until finished
     Input: 
@@ -534,10 +599,10 @@ def visit_website(main_tab,profile):
                 logger('NoMoreAds','Restarting',round(toc-tic,2),profile)
                 visit_website_stop = 0
                 return 1
-
+            
             else:
                 # links status from the visit website button
-                money_link=get_href_from_popup(main_tab,ltc_visit_website_button,ltc_money_link_element)
+                money_link=get_href_from_popup(main_tab,ltc_visit_website_button,ltc_last_popup_link)
                 wait(2)
                 webbrowser.open(money_link)
                 adsStatus = open_link_until_make_money(money_link,main_tab)
@@ -545,13 +610,112 @@ def visit_website(main_tab,profile):
                 toc = time.perf_counter()
                 logger(adsStatus,money_link,round(toc-tic,2),profile)
                 print('Closing Browser')
-
+        
         except Exception as E:
             print(str(E))
             toc = time.perf_counter()
             logger('error',str(E),'10',profile)            
             close_browser_by_name()
             visit_website_stop = 0
+
+
+
+def join_channel(main_tab,profile):
+    """ 
+    Description: Join a channel to make money
+    Input: 
+        profile: <Location of profile instance>
+        main_tab: <Location of main_tab instance>
+    Output:
+        Keeps joinging the paid channel forever
+    """
+        # Start Joining the Channel third
+    send_command(main_tab,ltc_channel_command_input_field,'/join')
+    join_channel_stop=1
+    wait(5)
+    while join_channel_stop:
+        #  the visit site to get the link
+        tic = time.perf_counter()
+        status_of_ads = ads_status(main_tab,telegram_last_message_area)
+        
+        if status_of_ads=='NoMoreAds':
+            logger('NoMoreAds','Restarting','10',profile)
+            join_channel_stop = 0
+            return 1
+        
+        elif status_of_ads=='JoinChannel':
+            # links status from the visit website button
+            bot_link=get_href_from_popup(main_tab,ltc_join_channel_button,ltc_last_popup_link)
+            wait(2)
+            # Get the channel name from the browser history
+            channel_link = get_final_url_from_browser_history(bot_link)
+            channel_tag = channel_link.split('/')[-1].split('?')[0]
+            # Search and traverse to the channel
+            search_and_goto_channel_by_name(main_tab,channel_tag)
+            wait(5)
+            # Click subscribe / Join Button
+            click_when_loaded(main_tab,bot_channel_start_btn,ttr=10)
+            # bot_channel=get_text_of_element(main_tab,bot_channel_name)
+            # Forward the message back to channel, this eases to get back to the LTC bot channel
+            # bot_channel_name = forward_this_message(main_tab,channel='subscribe')
+            click_when_loaded(main_tab,ltc_channel_joined_button)
+            wait(5)
+            search_and_goto_channel_by_name(main_tab,LTC_CHANNEL_ID)
+            wait(2)
+            # open bots command again
+            send_command(main_tab,ltc_channel_command_input_field,'/join')
+            wait(2)
+            toc = time.perf_counter()
+            logger('JoinChannel',channel_tag,round(toc-tic,2),profile)
+            wait(2)
+            # check if the last message has Join Channel Button in it
+            try:
+                if bot_link == get_href_from_popup(main_tab,ltc_join_channel_button,ltc_last_popup_link):
+                    wait(2) 
+                    click_when_loaded(main_tab,ltc_skip_button)
+                    wait(2)
+                    toc = time.perf_counter()
+                    logger("SkippedAds",channel_tag,round(toc-tic,2),profile)
+                    wait(2)
+            except:
+                pass
+        
+        elif status_of_ads=='JoinGroup':
+            # links status from the visit website button
+            bot_link=get_href_from_popup(main_tab,ltc_join_group_button,ltc_last_popup_link)
+            wait(2)
+            # Get the channel name from the browser history
+            group_link = get_final_url_from_browser_history(bot_link)
+            group_tag = group_link.split('/')[-1].split('?')[0]
+            # Search and traverse to the channel
+            search_and_goto_channel_by_name(main_tab,group_tag)
+            wait(5)
+            # click the button
+            click_when_loaded(main_tab,bot_channel_start_btn,ttr=10)
+            # bot_channel=get_text_of_element(main_tab,bot_channel_name)
+            # Forward the message back to channel, this eases to get back to the LTC bot channel
+            # bot_channel_name = forward_this_message(main_tab,channel='subscribe')
+            click_when_loaded(main_tab,ltc_channel_joined_button)
+            wait(5)
+            search_and_goto_channel_by_name(main_tab,LTC_CHANNEL_ID)
+            wait(2)
+            # open bots command again
+            send_command(main_tab,ltc_channel_command_input_field,'/join')
+            wait(2)
+            toc = time.perf_counter()
+            logger('JoinGroup',channel_tag,round(toc-tic,2),profile)
+            wait(2)
+            # check if the last message has Join Channel Button in it
+            try:
+                if bot_link == get_href_from_popup(main_tab,ltc_join_group_button,ltc_last_popup_link):
+                    wait(2) 
+                    click_when_loaded(main_tab,ltc_skip_button)
+                    wait(2)
+                    toc = time.perf_counter()
+                    logger("SkippedAds",channel_tag,round(toc-tic,2),profile)
+                    wait(2)
+            except:
+                pass
 
 
 def ppc_viewer(profile):
@@ -579,9 +743,10 @@ def ppc_viewer(profile):
     wait(5)    
     message_bot(main_tab,profile)
     visit_website(main_tab,profile)
+    join_channel(main_tab,profile)
     # delete channels between the given time interval only
-    if is_time_in_range(14,16):
-        bot_delete_all_channel(main_tab)
+    # if is_time_in_range(14,16):
+    #     bot_delete_all_channel(main_tab)
     
     main_tab.quit()
 
@@ -608,6 +773,6 @@ def runner():
             wait(10)
             close_browser_by_name(browserName='Firefox.exe')
             #clear_cache()
-            
+
 if __name__ == "__main__":
     runner()
