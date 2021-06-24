@@ -13,6 +13,9 @@ from glob import glob
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from browser_history.browsers import Brave
+import keyboard
+import pyautogui
+pyautogui.FAILSAFE = False
 """ Not used now """
 # imports
 # from fake_useragent import UserAgent
@@ -20,12 +23,11 @@ from browser_history.browsers import Brave
 # from typing import Any
 # import requests
 # from pywinauto import Application
-# import keyboard
 # from subprocess import Popen
 # from selenium.common.exceptions import NoSuchElementException
 # from selenium.webdriver.support.ui import WebDriverWait
 # from selenium.webdriver.support import expected_conditions as 
-import pyautogui
+
 
 # functions
 # from keyboard import press
@@ -160,7 +162,7 @@ def get_final_url_from_browser_history(transit_url,wait_time=12):
     wait(2)
     webbrowser.get().open(transit_url)
     wait(wait_time)
-    pyautogui.click(x=1903, y=15)
+    keyboard.press_and_release('ctrl+w')
     wait(1)
     bot_url = Brave().fetch_history().histories[-1][-1]
     # 
@@ -590,33 +592,25 @@ def visit_website(main_tab,profile):
     visit_website_stop=1
     wait(5)
     while visit_website_stop:
-        tic = time.perf_counter()
-        try:         
-            #  the visit site to get the link
-            status_of_ads = ads_status(main_tab,telegram_last_message_area) 
-            if status_of_ads=='NoMoreAds':
-                toc = time.perf_counter()
-                logger('NoMoreAds','Restarting',round(toc-tic,2),profile)
-                visit_website_stop = 0
-                return 1
-            
-            else:
-                # links status from the visit website button
-                money_link=get_href_from_popup(main_tab,ltc_visit_website_button,ltc_last_popup_link)
-                wait(2)
-                webbrowser.open(money_link)
-                adsStatus = open_link_until_make_money(money_link,main_tab)
-                close_browser_by_name()
-                toc = time.perf_counter()
-                logger(adsStatus,money_link,round(toc-tic,2),profile)
-                print('Closing Browser')
-        
-        except Exception as E:
-            print(str(E))
+        tic = time.perf_counter()         
+        #  the visit site to get the link
+        status_of_ads = ads_status(main_tab,telegram_last_message_area) 
+        if status_of_ads=='NoMoreAds':
             toc = time.perf_counter()
-            logger('error',str(E),'10',profile)            
-            close_browser_by_name()
+            logger('NoMoreAds','Restarting',round(toc-tic,2),profile)
             visit_website_stop = 0
+            return 1
+        
+        else:
+            # links status from the visit website button
+            money_link=get_href_from_popup(main_tab,ltc_visit_website_button,ltc_last_popup_link)
+            wait(2)
+            webbrowser.open(money_link)
+            adsStatus = open_link_until_make_money(money_link,main_tab)
+            close_browser_by_name()
+            toc = time.perf_counter()
+            logger(adsStatus,money_link,round(toc-tic,2),profile)
+            print('Closing Browser')
 
 
 
@@ -658,9 +652,9 @@ def join_channel(main_tab,profile):
             # bot_channel=get_text_of_element(main_tab,bot_channel_name)
             # Forward the message back to channel, this eases to get back to the LTC bot channel
             # bot_channel_name = forward_this_message(main_tab,channel='subscribe')
-            click_when_loaded(main_tab,ltc_channel_joined_button)
-            wait(5)
             search_and_goto_channel_by_name(main_tab,LTC_CHANNEL_ID)
+            wait(5)
+            click_when_loaded(main_tab,ltc_channel_joined_button)
             wait(2)
             # open bots command again
             send_command(main_tab,ltc_channel_command_input_field,'/join')
@@ -695,15 +689,15 @@ def join_channel(main_tab,profile):
             # bot_channel=get_text_of_element(main_tab,bot_channel_name)
             # Forward the message back to channel, this eases to get back to the LTC bot channel
             # bot_channel_name = forward_this_message(main_tab,channel='subscribe')
-            click_when_loaded(main_tab,ltc_channel_joined_button)
-            wait(5)
             search_and_goto_channel_by_name(main_tab,LTC_CHANNEL_ID)
+            wait(5)
+            click_when_loaded(main_tab,ltc_channel_joined_button)
             wait(2)
             # open bots command again
             send_command(main_tab,ltc_channel_command_input_field,'/join')
             wait(2)
             toc = time.perf_counter()
-            logger('JoinGroup',channel_tag,round(toc-tic,2),profile)
+            logger('JoinGroup',group_tag,round(toc-tic,2),profile)
             wait(2)
             # check if the last message has Join Channel Button in it
             try:
@@ -712,7 +706,7 @@ def join_channel(main_tab,profile):
                     click_when_loaded(main_tab,ltc_skip_button)
                     wait(2)
                     toc = time.perf_counter()
-                    logger("SkippedAds",channel_tag,round(toc-tic,2),profile)
+                    logger("SkippedAds",group_tag,round(toc-tic,2),profile)
                     wait(2)
             except:
                 pass
@@ -740,10 +734,32 @@ def ppc_viewer(profile):
     click_when_loaded(main_tab,ltc_channel_button,ttr=20,max_retries=4,refresh=True)
     # set variables for future use
     print('Setting the variables and Entering the loop')
-    wait(5)    
-    message_bot(main_tab,profile)
-    visit_website(main_tab,profile)
-    join_channel(main_tab,profile)
+    wait(5)
+
+    try:  
+        message_bot(main_tab,profile)
+    except Exception as E:
+        print(str(E))
+        toc = time.perf_counter()
+        logger('error',str(E),'10',profile)            
+        close_browser_by_name()
+
+    try:
+        visit_website(main_tab,profile)
+    except Exception as E:
+        print(str(E))
+        toc = time.perf_counter()
+        logger('error',str(E),'10',profile)            
+        close_browser_by_name()
+
+    try:
+        join_channel(main_tab,profile)
+    except Exception as E:
+        print(str(E))
+        toc = time.perf_counter()
+        logger('error',str(E),'10',profile)            
+        close_browser_by_name()
+
     # delete channels between the given time interval only
     # if is_time_in_range(14,16):
     #     bot_delete_all_channel(main_tab)
