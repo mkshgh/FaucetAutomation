@@ -36,7 +36,8 @@ pyautogui.FAILSAFE = False
 # to remove the popup if exists
 # def clear_cache():
 #     p = Popen("freeTemp.bat", cwd=r"C:\\pyteleclick\\")
-    
+
+
 # def bot_delete_the_channel(main_tab,channel_tag):
 #     try:
 #         # channel_to_delete
@@ -55,6 +56,7 @@ pyautogui.FAILSAFE = False
 #         return 1
 #     except:
 #         return 0
+
 
 # def get_final_url_from_browser_history(transit_url,wait_time=12):
 #     """ 
@@ -82,8 +84,10 @@ pyautogui.FAILSAFE = False
 # variables
 # bot_channel_setting_btn = "//div[@class='header-tools']//child::button[@class='Button smaller translucent round has-ripple']"
 # bot_channel_select_message_btn = "//div[@class='bubble menu-container custom-scroll top right opacity-transition fast open shown']//child::i[@class='icon-select']/.."
-# telegram_last_message_area = "(//div[@class='message-date-group'][last()]/div)[last()]/a"
 # ltc_join_channel_button_last_seen ='(//button[starts-with(text(),"🔎 Go to channel")])[last()]'
+# cache_LTC_Channel_Link_div_primary = '//div[@class="PickerSelectedItem"][1]'
+# ltc_join_channel_button_last_seen ='(//button[starts-with(text(),"🔎 Go to channel")])[last()]'
+# ltc_join_group_button_last_seen ='(//button[starts-with(text(),"🔎 Go to group")])[last()]'
 
 ltc_all_channels='//div[@class="ripple-container"]//ancestor::div[@class="ListItem-button"]'
 telegram_last_message_area = "(//div[@class='message-date-group'][last()]/div)[last()]"
@@ -148,7 +152,7 @@ def click_this_element(main_tab,element_to_click):
     main_tab.find_element(By.XPATH,element_to_click).click()
 
     
-def get_final_url_from_clipboard(transit_url,wait_time=10):
+def get_final_url_from_clipboard(transit_url,wait_time=8):
     """ 
     Description: get the url of the given messsage bot given xtab is installed and only one tab is opened at a time
     Input: 
@@ -169,11 +173,12 @@ def get_final_url_from_clipboard(transit_url,wait_time=10):
     bot_url = pyperclip.paste()
     wait(1)
     close_browser_by_name()
-    # 
-    # if transit_url..split('//')[-1] in bot_url:
-    #     wait(5)
+
+    # if transit_url.split('//')[-1] == bot_url:
+    #     wait(2)
     #     bot_url = get_final_url_from_clipboard(transit_url,wait_time+5)
     # else:
+
     return bot_url.split('//')[-1]
 
 def is_time_in_range(start_time:int,end_time:int,current_time=int(datetime.now().strftime("%H"))):
@@ -501,28 +506,6 @@ def visit_link_for_time(intial_url,wait_time=11):
     wait(wait_time)
     close_browser_by_name()
 
-    
-def search_and_goto_channel_by_name(main_tab,channel_name):
-    """ 
-    Description: Pay per click for LTC BOT
-    Input: 
-        channel_name: Name of telegram_channel_name you want to join
-        main_tab: <Location of main_tab instance>
-    Output:
-        Keeps clicking the ads forever
-    """
-    bot_search_box = "//input[@id='telegram-search-input']" 
-    search_bot_channel_div = "//child::span[contains(text(),'{}')]//ancestor::div[@class='ListItem-button']".format(channel_name)
-    alternative_bot_channel_div = '//div[@class="ListItem chat-item-clickable search-result no-selection"][1]'
-    cache_LTC_Channel_Link_div = '//div[@class="search-section"][1]//div[@class="ListItem chat-item-clickable search-result no-selection"][1]'
-    cache_LTC_Channel_Link_div_primary = '//div[@class="PickerSelectedItem"][1]'
-    send_command(main_tab,bot_search_box,channel_name)
-    wait(1)
-    if channel_name=="Litecoin_click_bot":
-        click_when_loaded(main_tab,cache_LTC_Channel_Link_div)
-            
-    elif click_when_loaded(main_tab,search_bot_channel_div,ttr=4)=='element_not_loaded':
-        click_when_loaded(main_tab,alternative_bot_channel_div)
         
 
 def message_bot(main_tab,profile):
@@ -615,6 +598,52 @@ def visit_website(main_tab,profile):
             print('Closing Browser')
 
 
+# .....................
+    
+def search_and_goto_channel_by_name(main_tab,channel_name):
+    """ 
+    Description: Search channel by and go to it
+    Input: 
+        channel_name: Name of telegram_channel_name you want to join
+        main_tab: <Location of main_tab instance>
+    Output:
+        Keeps clicking the ads forever
+    """
+    bot_search_box = "//input[@id='telegram-search-input']" 
+    search_bot_channel_div = "//child::span[contains(text(),'{}')]//ancestor::div[@class='ListItem-button']".format(channel_name)
+    alternative_bot_channel_div = '//div[@class="ListItem chat-item-clickable search-result no-selection"][1]'
+    cache_LTC_Channel_Link_div = '//div[@class="search-section"][1]//div[@class="ListItem chat-item-clickable search-result no-selection"][1]'
+    send_command(main_tab,bot_search_box,channel_name)
+    wait(1)
+    if channel_name=="Litecoin_click_bot":
+        click_when_loaded(main_tab,cache_LTC_Channel_Link_div)
+            
+    elif click_when_loaded(main_tab,search_bot_channel_div,ttr=4)=='element_not_loaded':
+        click_when_loaded(main_tab,alternative_bot_channel_div)
+       
+
+
+def join_this_channel_and_return_back(main_tab,channel_tag,original_channel='Litecoin_click_bot'):
+    """ 
+    Description: Join channel by name and return back to the original channel
+    Input: 
+        channel_name: Name of telegram_channel_name you want to join
+        main_tab: <Location of main_tab instance>
+    Output:
+        Keeps clicking the ads forever
+    """
+    channel_tag = '@'+channel_tag
+    channel_link = '(//a[starts-with(text(),"{}")])[last()]'.format(channel_tag)
+    # send and click the channel link
+    send_command(main_tab,ltc_channel_command_input_field,channel_tag)
+    click_when_loaded(main_tab,channel_link,ttr=6)
+    # Click subscribe / Join Button
+    click_when_loaded(main_tab,bot_channel_start_btn,ttr=6)
+    # return to 
+    if click_when_loaded(main_tab,ltc_channel_button,ttr=6)== 'element_not_found':
+        search_and_goto_channel_by_name(main_tab,original_channel)
+    click_when_loaded(main_tab,ltc_channel_joined_button)
+    wait(2)
 
 def join_channel(main_tab,profile,run_times=13):
     """ 
@@ -650,16 +679,7 @@ def join_channel(main_tab,profile,run_times=13):
             channel_link = get_final_url_from_clipboard(bot_link)
             channel_tag = channel_link.split('/')[-1].split('?')[0]
             # Search and traverse to the channel
-            search_and_goto_channel_by_name(main_tab,channel_tag)
-            # Click subscribe / Join Button
-            click_when_loaded(main_tab,bot_channel_start_btn,ttr=6)
-            # bot_channel=get_text_of_element(main_tab,bot_channel_name)
-            # Forward the message back to channel, this eases to get back to the LTC bot channel
-            # bot_channel_name = forward_this_message(main_tab,channel='subscribe')
-            search_and_goto_channel_by_name(main_tab,LTC_CHANNEL_ID)
-            wait(5)
-            click_when_loaded(main_tab,ltc_channel_joined_button)
-            wait(2)
+            join_this_channel_and_return_back(main_tab,channel_tag)
             # open bots command again
             send_command(main_tab,ltc_channel_command_input_field,'/join')
             wait(2)
@@ -688,15 +708,7 @@ def join_channel(main_tab,profile,run_times=13):
             group_link = get_final_url_from_clipboard(bot_link)
             group_tag = group_link.split('/')[-1].split('?')[0]
             # Search and traverse to the channel
-            search_and_goto_channel_by_name(main_tab,group_tag)
-            # click the button
-            click_when_loaded(main_tab,bot_channel_start_btn,ttr=6)
-            # bot_channel=get_text_of_element(main_tab,bot_channel_name)
-            # Forward the message back to channel, this eases to get back to the LTC bot channel
-            # bot_channel_name = forward_this_message(main_tab,channel='subscribe')
-            search_and_goto_channel_by_name(main_tab,LTC_CHANNEL_ID)
-            click_when_loaded(main_tab,ltc_channel_joined_button)
-            wait(2)
+            join_this_channel_and_return_back(main_tab,group_tag)
             # open bots command again
             send_command(main_tab,ltc_channel_command_input_field,'/join')
             wait(2)
@@ -757,7 +769,7 @@ def ppc_viewer(profile):
         close_browser_by_name()
     
     try:
-        join_channel(main_tab,profile)
+        join_channel(main_tab,profile,run_times=25)
     except Exception as E:
         print(str(E))
         logger('error',str(E),'10',profile)
@@ -771,7 +783,7 @@ def ppc_viewer(profile):
 
 def runner():
     # check if new ads are avialable
-    current_crypto_index=0
+    current_crypto_index=2
     while True:
         try:
             # this is done so that it doesn't pass over the given profiles
