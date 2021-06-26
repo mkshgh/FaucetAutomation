@@ -12,16 +12,17 @@ from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from glob import glob
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
-from browser_history.browsers import Brave
-import keyboard
 import pyautogui
+import pyperclip
 pyautogui.FAILSAFE = False
 """ Not used now """
 # imports
 # from fake_useragent import UserAgent
+# from browser_history.browsers import Brave
 # from urllib.parse import unquote
 # from typing import Any
 # import requests
+# import keyboard
 # from pywinauto import Application
 # from subprocess import Popen
 # from selenium.common.exceptions import NoSuchElementException
@@ -147,7 +148,7 @@ def click_this_element(main_tab,element_to_click):
     main_tab.find_element(By.XPATH,element_to_click).click()
 
     
-def get_final_url_from_browser_history(transit_url,wait_time=12):
+def get_final_url_from_clipboard(transit_url,wait_time=10):
     """ 
     Description: get the url of the given messsage bot given xtab is installed and only one tab is opened at a time
     Input: 
@@ -162,14 +163,18 @@ def get_final_url_from_browser_history(transit_url,wait_time=12):
     wait(2)
     webbrowser.get().open(transit_url)
     wait(wait_time)
-    keyboard.press_and_release('ctrl+w')
+    pyautogui.hotkey('alt','d')
     wait(1)
-    bot_url = Brave().fetch_history().histories[-1][-1]
+    pyautogui.hotkey('ctrl', 'c')
+    bot_url = pyperclip.paste()
+    wait(1)
+    close_browser_by_name()
     # 
-    # if transit_url or test_url in bot_url:
-    #     get_final_url_from_browser_history(transit_url,wait_time=wait_time+5)
+    # if transit_url..split('//')[-1] in bot_url:
+    #     wait(5)
+    #     bot_url = get_final_url_from_clipboard(transit_url,wait_time+5)
     # else:
-    return bot_url
+    return bot_url.split('//')[-1]
 
 def is_time_in_range(start_time:int,end_time:int,current_time=int(datetime.now().strftime("%H"))):
     """ 
@@ -430,6 +435,7 @@ def bot_delete_all_channel(main_tab,leave_top=5):
         total_channels = len(all_channel_links)
 
 
+
 def forward_this_message(main_tab,channel='new'):
     """ 
     Description: get the url of the given messsage bot
@@ -455,39 +461,34 @@ def forward_this_message(main_tab,channel='new'):
     ltc_select_btn= "//div[@class='bubble menu-container custom-scroll top right opacity-transition fast open shown']//i[@class='icon-select']/.."
     window_x = main_tab.get_window_size()['width']/2
     window_y = main_tab.get_window_size()['height']
-
-
     
-    # try:    
-        # searchbox
     if channel=='self':
         bot_channel="LTC_CLICK_BOT"
         
     elif channel=='new':
         click_when_loaded(main_tab,ltc_last_message_link)
-        click_when_loaded(main_tab,bot_channel_start_btn,ttr=10)
+        click_when_loaded(main_tab,bot_channel_start_btn,ttr=6)
         # name of the channel
         bot_channel = get_text_of_element(main_tab,bot_channel_name)
-    
-    elif channel=='subscribe':
-        click_when_loaded(main_tab,bot_channel_start_btn,ttr=10)
+    # if channel is subscribe
+    else:
+        click_when_loaded(main_tab,bot_channel_start_btn,ttr=6)
         bot_channel=get_text_of_element(main_tab,bot_channel_name)
-    # click the settings button 
+    
     click_when_loaded(main_tab,ltc_setting_btn)
     click_when_loaded(main_tab,ltc_select_btn)
     # if unable to find the last element after selecting the item, and it keeps happening somehow
     if click_when_loaded(main_tab,ltc_last_message,ttr=4)=='element_not_loaded':
         # click on the center of the webapge and hope it clicks something
         click_loc_xy(main_tab,window_x,int(0.5*window_y))
-
     click_when_loaded(main_tab,bot_forward_button)
     click_when_loaded(main_tab,bot_ltc_channel_button)
     click_when_loaded(main_tab,bot_ltc_send_button)
     return bot_channel
-    # except:
-    #     return 'SkippedAds'
 
-def visit_link_for_time(intial_url,wait_time=12):
+
+
+def visit_link_for_time(intial_url,wait_time=11):
     """ 
     Description: get the url of the given messsage bot
     Input: 
@@ -516,7 +517,7 @@ def search_and_goto_channel_by_name(main_tab,channel_name):
     cache_LTC_Channel_Link_div = '//div[@class="search-section"][1]//div[@class="ListItem chat-item-clickable search-result no-selection"][1]'
     cache_LTC_Channel_Link_div_primary = '//div[@class="PickerSelectedItem"][1]'
     send_command(main_tab,bot_search_box,channel_name)
-    wait(2)
+    wait(1)
     if channel_name=="Litecoin_click_bot":
         click_when_loaded(main_tab,cache_LTC_Channel_Link_div)
             
@@ -562,9 +563,6 @@ def message_bot(main_tab,profile):
             # open bots command again
             send_command(main_tab,ltc_channel_command_input_field,'/bots')
             wait(2)
-            toc = time.perf_counter()
-            logger('MessageBot',bot_channel_name,round(toc-tic,2),profile)
-            wait(2)
             # check if the last message has message button in it
             try:
                 if bot_link == get_href_from_popup(main_tab,ltc_message_bot_button,ltc_last_popup_link):
@@ -574,8 +572,12 @@ def message_bot(main_tab,profile):
                     toc = time.perf_counter()
                     logger("SkippedAds",bot_channel_name,round(toc-tic,2),profile)
                     wait(2)
+                else:
+                    toc = time.perf_counter()
+                    logger('MessageBot',bot_channel_name,round(toc-tic,2),profile)
             except:
-                pass
+                toc = time.perf_counter()
+                logger('MessageBot',bot_channel_name,round(toc-tic,2),profile)
                     
 
 def visit_website(main_tab,profile):
@@ -614,7 +616,7 @@ def visit_website(main_tab,profile):
 
 
 
-def join_channel(main_tab,profile):
+def join_channel(main_tab,profile,run_times=13):
     """ 
     Description: Join a channel to make money
     Input: 
@@ -625,30 +627,32 @@ def join_channel(main_tab,profile):
     """
         # Start Joining the Channel third
     send_command(main_tab,ltc_channel_command_input_field,'/join')
-    join_channel_stop=1
+    join_channel_start=1
     wait(5)
-    while join_channel_stop:
+    while join_channel_start:
+        print('{} times running'.format(run_times))
+        if run_times < 0:
+            raise Exception('Stopping at {} times'.format(run_times+21))
+            join_channel_start = 0
         #  the visit site to get the link
         tic = time.perf_counter()
         status_of_ads = ads_status(main_tab,telegram_last_message_area)
         
         if status_of_ads=='NoMoreAds':
             logger('NoMoreAds','Restarting','10',profile)
-            join_channel_stop = 0
+            join_channel_start = 0
             return 1
         
         elif status_of_ads=='JoinChannel':
             # links status from the visit website button
             bot_link=get_href_from_popup(main_tab,ltc_join_channel_button,ltc_last_popup_link)
-            wait(2)
             # Get the channel name from the browser history
-            channel_link = get_final_url_from_browser_history(bot_link)
+            channel_link = get_final_url_from_clipboard(bot_link)
             channel_tag = channel_link.split('/')[-1].split('?')[0]
             # Search and traverse to the channel
             search_and_goto_channel_by_name(main_tab,channel_tag)
-            wait(5)
             # Click subscribe / Join Button
-            click_when_loaded(main_tab,bot_channel_start_btn,ttr=10)
+            click_when_loaded(main_tab,bot_channel_start_btn,ttr=6)
             # bot_channel=get_text_of_element(main_tab,bot_channel_name)
             # Forward the message back to channel, this eases to get back to the LTC bot channel
             # bot_channel_name = forward_this_message(main_tab,channel='subscribe')
@@ -658,9 +662,6 @@ def join_channel(main_tab,profile):
             wait(2)
             # open bots command again
             send_command(main_tab,ltc_channel_command_input_field,'/join')
-            wait(2)
-            toc = time.perf_counter()
-            logger('JoinChannel',channel_tag,round(toc-tic,2),profile)
             wait(2)
             # check if the last message has Join Channel Button in it
             try:
@@ -671,33 +672,33 @@ def join_channel(main_tab,profile):
                     toc = time.perf_counter()
                     logger("SkippedAds",channel_tag,round(toc-tic,2),profile)
                     wait(2)
-            except:
-                pass
+                else:
+                    toc = time.perf_counter()
+                    logger('JoinChannel',channel_tag,round(toc-tic,2),profile)
+                    run_times=run_times-1
+            except Exception as E:
+                run_times=run_times-1
+                toc = time.perf_counter()
+                logger('JoinChannel',channel_tag,round(toc-tic,2),profile)
         
         elif status_of_ads=='JoinGroup':
             # links status from the visit website button
             bot_link=get_href_from_popup(main_tab,ltc_join_group_button,ltc_last_popup_link)
-            wait(2)
             # Get the channel name from the browser history
-            group_link = get_final_url_from_browser_history(bot_link)
+            group_link = get_final_url_from_clipboard(bot_link)
             group_tag = group_link.split('/')[-1].split('?')[0]
             # Search and traverse to the channel
             search_and_goto_channel_by_name(main_tab,group_tag)
-            wait(5)
             # click the button
-            click_when_loaded(main_tab,bot_channel_start_btn,ttr=10)
+            click_when_loaded(main_tab,bot_channel_start_btn,ttr=6)
             # bot_channel=get_text_of_element(main_tab,bot_channel_name)
             # Forward the message back to channel, this eases to get back to the LTC bot channel
             # bot_channel_name = forward_this_message(main_tab,channel='subscribe')
             search_and_goto_channel_by_name(main_tab,LTC_CHANNEL_ID)
-            wait(5)
             click_when_loaded(main_tab,ltc_channel_joined_button)
             wait(2)
             # open bots command again
             send_command(main_tab,ltc_channel_command_input_field,'/join')
-            wait(2)
-            toc = time.perf_counter()
-            logger('JoinGroup',group_tag,round(toc-tic,2),profile)
             wait(2)
             # check if the last message has Join Channel Button in it
             try:
@@ -708,8 +709,14 @@ def join_channel(main_tab,profile):
                     toc = time.perf_counter()
                     logger("SkippedAds",group_tag,round(toc-tic,2),profile)
                     wait(2)
-            except:
-                pass
+                else:
+                    toc = time.perf_counter()
+                    logger('JoinGroup',group_tag,round(toc-tic,2),profile)
+                    run_times=run_times-1
+            except Exception as E:
+                run_times=run_times-1
+                toc = time.perf_counter()
+                logger('JoinChannel',channel_tag,round(toc-tic,2),profile)
 
 
 def ppc_viewer(profile):
@@ -735,35 +742,30 @@ def ppc_viewer(profile):
     # set variables for future use
     print('Setting the variables and Entering the loop')
     wait(5)
-
-    try:  
+    try:
         message_bot(main_tab,profile)
     except Exception as E:
-        print(str(E))
-        toc = time.perf_counter()
-        logger('error',str(E),'10',profile)            
+        logger('error',str(E),'10',profile)
         close_browser_by_name()
-
+        print(str(E))
+    
     try:
         visit_website(main_tab,profile)
-    except Exception as E:
+    except:
         print(str(E))
-        toc = time.perf_counter()
-        logger('error',str(E),'10',profile)            
+        logger('error',str(E),'10',profile)
         close_browser_by_name()
-
+    
     try:
         join_channel(main_tab,profile)
     except Exception as E:
         print(str(E))
-        toc = time.perf_counter()
-        logger('error',str(E),'10',profile)            
+        logger('error',str(E),'10',profile)
         close_browser_by_name()
-
+    
     # delete channels between the given time interval only
     # if is_time_in_range(14,16):
     #     bot_delete_all_channel(main_tab)
-    
     main_tab.quit()
 
 
