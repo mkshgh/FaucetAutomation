@@ -152,7 +152,7 @@ def click_this_element(main_tab,element_to_click):
     main_tab.find_element(By.XPATH,element_to_click).click()
 
     
-def get_final_url_from_clipboard(transit_url,wait_time=8):
+def get_final_url_from_clipboard(transit_url,wait_time=10):
     """ 
     Description: get the url of the given messsage bot given xtab is installed and only one tab is opened at a time
     Input: 
@@ -172,12 +172,15 @@ def get_final_url_from_clipboard(transit_url,wait_time=8):
     pyautogui.hotkey('ctrl', 'c')
     bot_url = pyperclip.paste()
     wait(1)
-    close_browser_by_name()
 
-    # if transit_url.split('//')[-1] == bot_url:
-    #     wait(2)
-    #     bot_url = get_final_url_from_clipboard(transit_url,wait_time+5)
-    # else:
+    if transit_url.split('//')[-1] == bot_url:
+        wait(2)
+        pyautogui.hotkey('alt','d')
+        wait(1)
+        pyautogui.hotkey('ctrl', 'c')
+        bot_url = pyperclip.paste()
+
+    close_browser_by_name()
 
     return bot_url.split('//')[-1]
 
@@ -367,15 +370,17 @@ def open_link_until_make_money(money_link,main_tab):
         last_message = main_tab.find_element(By.XPATH,telegram_last_message_area).get_attribute('innerHTML')
         if ('Sorry, there are no new ads available.' in last_message):
             return  "NoMoreAds"
+        elif view_time>120:
+            # skip the link
+            send_command(main_tab,ltc_channel_command_input_field,'/visit')
+            wait(2)
+            click_this_element(main_tab,ltc_skip_button)
+            return "SkipAds"
         elif money_link == get_href_from_popup(main_tab,ltc_visit_website_button,ltc_last_popup_link):
             print('adding 5s to the loop: '+str(view_time))
             wait(5)
             view_time = view_time+5
             last_message = main_tab.find_element(By.XPATH,telegram_last_message_area).get_attribute('innerHTML')
-        elif view_time>120:
-            # skip the link
-            click_this_element(main_tab,ltc_skip_button)
-            return "SkipAds"
         else:
             return "VisitedSite"
             
@@ -411,26 +416,27 @@ def bot_delete_all_channel(main_tab,leave_top=5):
     total_channels = len(all_channel_links)
     while total_channels>leave_top:
         i=0
-        try:
-            for link in all_channel_links:
-                    i=i+1
-                    if i<leave_top:
-                        print('Skipping Chanel: ',i)
-                    elif i<leave_top+6:
-                        # channel_to_delete
-                        delete_channel_button = "//div[@class='MenuItem destructive']"
-                        confirm_delete_button = "//button[@class='Button confirm-dialog-button default danger text'][1]"
-                        # right click button
-                        actionChains = ActionChains(main_tab)
-                        actionChains.move_to_element(link).perform()
-                        actionChains.context_click().perform()
-                        # delete button
-                        click_when_loaded(main_tab,delete_channel_button,ttr=4)
-                        # confirm delete button
-                        click_when_loaded(main_tab,confirm_delete_button,ttr=4)
-                        print('deleted channel: ', i)
-        except:
-            pass
+        for i in range(total_channels):
+            try:
+                i=i+1
+                if i<leave_top:
+                    print('Skipping Chanel: ',i)
+                else:
+                    # channel_to_delete
+                    delete_channel_button = "//div[@class='MenuItem destructive']"
+                    confirm_delete_button = "//button[@class='Button confirm-dialog-button default danger text'][1]"
+                    # right click button
+                    actionChains = ActionChains(main_tab)
+                    actionChains.move_to_element(all_channel_links[i]).perform()
+                    actionChains.context_click().perform()
+                    # delete button
+                    click_when_loaded(main_tab,delete_channel_button,ttr=4)
+                    # confirm delete button
+                    click_when_loaded(main_tab,confirm_delete_button,ttr=4)
+                    print('deleted channel: ', i)
+            except:
+                i=i-1
+                pass
         # Refresh the page and check for the 
         main_tab.refresh()
         wait(2)
@@ -438,7 +444,7 @@ def bot_delete_all_channel(main_tab,leave_top=5):
         wait(2)
         all_channel_links = main_tab.find_elements_by_class_name('ListItem-button')
         total_channels = len(all_channel_links)
-
+    
 
 
 def forward_this_message(main_tab,channel='new'):
@@ -632,7 +638,7 @@ def join_this_channel_and_return_back(main_tab,channel_tag,original_channel='Lit
     Output:
         Keeps clicking the ads forever
     """
-    channel_tag = '@'+channel_tag
+    channel_tag = 't.me/'+channel_tag
     channel_link = '(//a[starts-with(text(),"{}")])[last()]'.format(channel_tag)
     # send and click the channel link
     send_command(main_tab,ltc_channel_command_input_field,channel_tag)
@@ -728,7 +734,7 @@ def join_channel(main_tab,profile,run_times=13):
             except Exception as E:
                 run_times=run_times-1
                 toc = time.perf_counter()
-                logger('JoinChannel',channel_tag,round(toc-tic,2),profile)
+                logger('JoinChannel',group_tag,round(toc-tic,2),profile)
 
 
 def ppc_viewer(profile):
@@ -769,7 +775,7 @@ def ppc_viewer(profile):
         close_browser_by_name()
     
     try:
-        join_channel(main_tab,profile,run_times=25)
+        join_channel(main_tab,profile,run_times=5)
     except Exception as E:
         print(str(E))
         logger('error',str(E),'10',profile)
@@ -777,13 +783,13 @@ def ppc_viewer(profile):
     
     # delete channels between the given time interval only
     # if is_time_in_range(14,16):
-    #     bot_delete_all_channel(main_tab)
+    # bot_delete_all_channel(main_tab)
     main_tab.quit()
 
 
 def runner():
     # check if new ads are avialable
-    current_crypto_index=2
+    current_crypto_index=3
     while True:
         try:
             # this is done so that it doesn't pass over the given profiles
