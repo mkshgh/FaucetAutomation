@@ -1,7 +1,6 @@
 """
 Auto telegram LTC mining BOT
 """
-from re import A
 from selenium import webdriver
 import time
 import os
@@ -17,6 +16,7 @@ import pyperclip
 pyautogui.FAILSAFE = False
 """ Not used now """
 # imports
+# from re import A
 # from fake_useragent import UserAgent
 # from browser_history.browsers import Brave
 # from urllib.parse import unquote
@@ -81,6 +81,7 @@ pyautogui.FAILSAFE = False
 #     #     get_final_url_from_browser_history(transit_url,wait_time=wait_time+5)
 #     # else:
 #     return bot_url
+
 # variables
 # bot_channel_setting_btn = "//div[@class='header-tools']//child::button[@class='Button smaller translucent round has-ripple']"
 # bot_channel_select_message_btn = "//div[@class='bubble menu-container custom-scroll top right opacity-transition fast open shown']//child::i[@class='icon-select']/.."
@@ -88,6 +89,8 @@ pyautogui.FAILSAFE = False
 # cache_LTC_Channel_Link_div_primary = '//div[@class="PickerSelectedItem"][1]'
 # ltc_join_channel_button_last_seen ='(//button[starts-with(text(),"🔎 Go to channel")])[last()]'
 # ltc_join_group_button_last_seen ='(//button[starts-with(text(),"🔎 Go to group")])[last()]'
+# ltc_join_channel_button = "//div[@class='message-date-group']/div[last()]//child::button[contains(text(),'Go to channel')]"
+# ltc_join_group_button = "//div[@class='message-date-group']/div[last()]//child::button[contains(text(),'Go to group')]"
 
 ltc_all_channels='//div[@class="ripple-container"]//ancestor::div[@class="ListItem-button"]'
 telegram_last_message_area = "(//div[@class='message-date-group'][last()]/div)[last()]"
@@ -100,9 +103,8 @@ ltc_skip_button = '(//button[text()="⏩ Skip"])[last()]'
 ltc_message_bot_button = "//div[@class='message-date-group']/div[last()]//child::button[contains(text(),'Message bot')]"
 ltc_message_bot_button_last_seen ='(//button[starts-with(text(),"✉️ Message bot")])[last()]'
 
-ltc_join_channel_button = "//div[@class='message-date-group']/div[last()]//child::button[contains(text(),'Go to channel')]"
-ltc_join_group_button = "//div[@class='message-date-group']/div[last()]//child::button[contains(text(),'Go to group')]"
 ltc_channel_joined_button = '(//button[starts-with(text(),"✅ Joined")])[last()]'
+ltc_last_join_channel_group_button = "//div[@class='message-date-group']/div[last()]//child::button[contains(text(),'Go to ')]"
 
 bot_channel_start_btn = "//button[@class='Button tiny primary fluid has-ripple']"
 bot_channel_name = "//div[@class='chat-info-wrapper']//child::h3"
@@ -120,8 +122,10 @@ LINK_START = "tg://unsafe_url?url="
 IMP_DELAY = 10
 profiles = glob(PROFILE_DIR+'/*/')
 LTC_CHANNEL_ID='Litecoin_click_bot'
+
+
 # Initialize the driver object
-def get_driver(profile):
+def get_driver(profile,zoom_level=0.8):
     """ 
     Description: New Instance of the webbrowser with given profile
     Input: 
@@ -132,6 +136,8 @@ def get_driver(profile):
     options = FirefoxOptions()
     #options.add_argument("--headless")
     fp = webdriver.FirefoxProfile(profile)
+    # zoomed out because sometimes skip button was out of view 
+    fp.set_preference("layout.css.devPixelsPerPx", zoom_level)
     teleminebot = webdriver.Firefox(firefox_profile=fp,options=options)
     teleminebot.maximize_window()
     return teleminebot
@@ -678,9 +684,9 @@ def join_channel(main_tab,profile,run_times=13):
             join_channel_start = 0
             return 1
         
-        elif status_of_ads=='JoinChannel':
+        elif status_of_ads=='JoinChannel' or status_of_ads=='JoinGroup':
             # links status from the visit website button
-            bot_link=get_href_from_popup(main_tab,ltc_join_channel_button,ltc_last_popup_link)
+            bot_link=get_href_from_popup(main_tab,ltc_last_join_channel_group_button,ltc_last_popup_link)
             # Get the channel name from the browser history
             channel_link = get_final_url_from_clipboard(bot_link)
             channel_tag = channel_link.split('/')[-1].split('?')[0]
@@ -688,10 +694,11 @@ def join_channel(main_tab,profile,run_times=13):
             join_this_channel_and_return_back(main_tab,channel_tag)
             # open bots command again
             send_command(main_tab,ltc_channel_command_input_field,'/join')
-            wait(2)
+            wait(3)
+            
             # check if the last message has Join Channel Button in it
             try:
-                if bot_link == get_href_from_popup(main_tab,ltc_join_channel_button,ltc_last_popup_link):
+                if bot_link == get_href_from_popup(main_tab,ltc_last_join_channel_group_button,ltc_last_popup_link):
                     wait(2) 
                     click_when_loaded(main_tab,ltc_skip_button)
                     wait(2)
@@ -706,35 +713,6 @@ def join_channel(main_tab,profile,run_times=13):
                 run_times=run_times-1
                 toc = time.perf_counter()
                 logger('JoinChannel',channel_tag,round(toc-tic,2),profile)
-        
-        elif status_of_ads=='JoinGroup':
-            # links status from the visit website button
-            bot_link=get_href_from_popup(main_tab,ltc_join_group_button,ltc_last_popup_link)
-            # Get the channel name from the browser history
-            group_link = get_final_url_from_clipboard(bot_link)
-            group_tag = group_link.split('/')[-1].split('?')[0]
-            # Search and traverse to the channel
-            join_this_channel_and_return_back(main_tab,group_tag)
-            # open bots command again
-            send_command(main_tab,ltc_channel_command_input_field,'/join')
-            wait(2)
-            # check if the last message has Join Channel Button in it
-            try:
-                if bot_link == get_href_from_popup(main_tab,ltc_join_group_button,ltc_last_popup_link):
-                    wait(2) 
-                    click_when_loaded(main_tab,ltc_skip_button)
-                    wait(2)
-                    toc = time.perf_counter()
-                    logger("SkippedAds",group_tag,round(toc-tic,2),profile)
-                    wait(2)
-                else:
-                    toc = time.perf_counter()
-                    logger('JoinGroup',group_tag,round(toc-tic,2),profile)
-                    run_times=run_times-1
-            except Exception as E:
-                run_times=run_times-1
-                toc = time.perf_counter()
-                logger('JoinChannel',group_tag,round(toc-tic,2),profile)
 
 
 def ppc_viewer(profile):
@@ -789,7 +767,7 @@ def ppc_viewer(profile):
 
 def runner():
     # check if new ads are avialable
-    current_crypto_index=3
+    current_crypto_index=4
     while True:
         try:
             # this is done so that it doesn't pass over the given profiles
