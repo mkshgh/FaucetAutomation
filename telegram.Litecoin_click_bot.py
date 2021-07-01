@@ -137,7 +137,7 @@ def get_driver(profile,zoom_level=0.8):
     #options.add_argument("--headless")
     fp = webdriver.FirefoxProfile(profile)
     # zoomed out because sometimes skip button was out of view 
-    fp.set_preference("layout.css.devPixelsPerPx", zoom_level)
+    fp.set_preference("layout.css.devPixelsPerPx", str(zoom_level))
     teleminebot = webdriver.Firefox(firefox_profile=fp,options=options)
     teleminebot.maximize_window()
     return teleminebot
@@ -298,8 +298,8 @@ def logger(text,money_link,view_time,profile):
         The log is written in logs.txt
     """ 
     current_time = datetime.now()
-    logs_time = "{}_{}_{}_{}".format(str(current_time.year),str(current_time.month),str(current_time.day),text)
-    logs_file = os.path.join('logs',(logs_time+"_logs.txt")) 
+    logs_time = "{}_{}_{}".format(str(current_time.year),str(current_time.month),str(current_time.day))
+    logs_file = os.path.join('logs',(logs_time+"_logs.csv")) 
     with open(logs_file, "a+",encoding="utf-8") as f:
         logs_write='['+profile+'] , ' + str(datetime.now())+ " , " + str(text) + ', '+ str(money_link) + " , "+str(view_time)+'s\n'
         f.write(logs_write)
@@ -767,7 +767,7 @@ def ppc_viewer(profile):
 
 def runner():
     # check if new ads are avialable
-    current_crypto_index=4
+    current_crypto_index=3
     while True:
         try:
             # this is done so that it doesn't pass over the given profiles
