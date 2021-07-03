@@ -658,21 +658,36 @@ def join_this_channel_and_return_back(main_tab,channel_tag,original_channel='Lit
     Input: 
         channel_name: Name of telegram_channel_name you want to join
         main_tab: <Location of main_tab instance>
+        original_channel: channel you want to return back to
     Output:
-        Keeps clicking the ads forever
+        AlreadyInChannel: Already joined channel in past, so deleted
+        ChannelJoined: Joined the channel Fresh
     """
+    # channel_to_delete
+    message = 'ChannelJoined'
+    delete_channel_button = "//div[@class='MenuItem destructive']"
+    confirm_delete_button = "//button[@class='Button confirm-dialog-button default danger text'][1]"
     channel_tag = 't.me/'+channel_tag
     channel_link = '(//a[starts-with(text(),"{}")])[last()]'.format(channel_tag)
     # send and click the channel link
     send_command(main_tab,ltc_channel_command_input_field,channel_tag)
     click_when_loaded(main_tab,channel_link,ttr=6)
-    # Click subscribe / Join Button
-    click_when_loaded(main_tab,bot_channel_start_btn,ttr=6)
+
+    # If you are alreday joined in the channel and you are not in the LTC Click Bot channel
+    if click_when_loaded(main_tab,bot_channel_start_btn,ttr=6)=='element_not_found' and get_text_of_element(main_tab,bot_channel_name) != 'LTC Click Bot':
+        click_when_loaded(main_tab,delete_channel_button,ttr=4)
+        # confirm delete button
+        click_when_loaded(main_tab,confirm_delete_button,ttr=4)
+        print('deleted channel: ',channel_tag)
+        message =  'AlreadyInChannel'
+
     # return to 
     if click_when_loaded(main_tab,ltc_channel_button,ttr=6)== 'element_not_found':
         search_and_goto_channel_by_name(main_tab,original_channel)
     click_when_loaded(main_tab,ltc_channel_joined_button)
     wait(2)
+    return message
+
 
 def join_channel(main_tab,profile,time2wait=5):
     """ 
@@ -694,10 +709,6 @@ def join_channel(main_tab,profile,time2wait=5):
         # counter to check the total time
         tic = time.perf_counter()
         status_of_ads = ads_status(main_tab,telegram_last_message_area)
-        # Run Time 
-        # print('{} times running'.format(run_times))
-        # if run_times < 0:
-        #     raise Exception('Stopping at {} times'.format(run_times))
         #  If no more ads available
         if int(time2wait)>6:
             raise Exception('Stooping at Wait Time {} hours'.format(str(time2wait)))
@@ -715,14 +726,22 @@ def join_channel(main_tab,profile,time2wait=5):
             main_tab.maximize_window()
             channel_tag = channel_link.split('/')[-1].split('?')[0]
             # Search and traverse to the channel
-            join_this_channel_and_return_back(main_tab,channel_tag)
+            joined_status = join_this_channel_and_return_back(main_tab,channel_tag)
             # open bots command again
             send_command(main_tab,ltc_channel_command_input_field,'/join')
             wait(3)
             
             # check if the last message has Join Channel Button in it
             try:
-                if bot_link == get_href_from_popup(main_tab,ltc_last_join_channel_group_button,ltc_last_popup_link):
+                if joined_status=='AlreadyInChannel':
+                    wait(2) 
+                    click_when_loaded(main_tab,ltc_skip_button)
+                    wait(2)
+                    toc = time.perf_counter()
+                    logger("SkipJoinChannelAlreadyJoined",channel_tag,round(toc-tic,2),profile)
+                    wait(2)
+
+                elif bot_link == get_href_from_popup(main_tab,ltc_last_join_channel_group_button,ltc_last_popup_link):
                     wait(2) 
                     click_when_loaded(main_tab,ltc_skip_button)
                     wait(2)
