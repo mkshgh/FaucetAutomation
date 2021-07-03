@@ -13,7 +13,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 import pyautogui
 import pyperclip
-import pygetwindow as gw
 pyautogui.FAILSAFE = False
 """ Not used now """
 # imports
@@ -110,7 +109,6 @@ ltc_last_join_channel_group_button = "//div[@class='message-date-group']/div[las
 bot_channel_start_btn = "//button[@class='Button tiny primary fluid has-ripple']"
 bot_channel_name = "//div[@class='chat-info-wrapper']//child::h3"
 
-
 # To do :
 # - Join the channels bots
 # channels = 'Litecoin_click_bot'
@@ -136,7 +134,7 @@ def get_driver(profile,zoom_level=0.8):
         Instance of the new browser
     """  
     options = FirefoxOptions()
-    # options.add_argument("--headless")
+    #options.add_argument("--headless")
     fp = webdriver.FirefoxProfile(profile)
     # zoomed out because sometimes skip button was out of view 
     fp.set_preference("layout.css.devPixelsPerPx", str(zoom_level))
@@ -160,7 +158,7 @@ def click_this_element(main_tab,element_to_click):
     main_tab.find_element(By.XPATH,element_to_click).click()
 
     
-def get_final_url_from_clipboard(transit_url,wait_time=10,default_browser = 'Brave'):
+def get_final_url_from_clipboard(transit_url,wait_time=10):
     """ 
     Description: get the url of the given messsage bot given xtab is installed and only one tab is opened at a time
     Input: 
@@ -170,27 +168,26 @@ def get_final_url_from_clipboard(transit_url,wait_time=10,default_browser = 'Bra
         Final url from your desired browser, I use brave by default 
     """ 
     test_url = 'www.mghimire.com.np'
-    # open the browser
+    # 
+    pyautogui.doubleClick(x=218, y=1061)
+    wait(2)
     webbrowser.get().open(transit_url)
-    # wait for some time
     wait(wait_time)
-    # move the brave browser to the top of the screen
-    # gw.getWindowsWithTitle(default_browser)[0].activate()
-    # wait(1)
-    # get the link
     pyautogui.hotkey('alt','d')
     wait(1)
     pyautogui.hotkey('ctrl', 'c')
     bot_url = pyperclip.paste()
     wait(1)
+
     if transit_url.split('//')[-1] == bot_url:
         wait(2)
         pyautogui.hotkey('alt','d')
         wait(1)
         pyautogui.hotkey('ctrl', 'c')
         bot_url = pyperclip.paste()
-    
+
     close_browser_by_name()
+
     return bot_url.split('//')[-1]
 
 def is_time_in_range(start_time:int,end_time:int,current_time=int(datetime.now().strftime("%H"))):
@@ -289,7 +286,7 @@ def get_href_from_popup(main_tab,popup_button,link_element):
     wait(1)
     return money_link
 
-def logger(taskPerformed,money_link,view_time,profile,money='0',time2wait='0'):
+def logger(text,money_link,view_time,profile):
     """ 
     Description: Log the important things
     Input: 
@@ -297,28 +294,15 @@ def logger(taskPerformed,money_link,view_time,profile,money='0',time2wait='0'):
         money_link: current money link
         view_time: The duration of time it ran
         profile: <current profile instance>
-        money: LTC that you earned
-        time2wait: time to wait before LTC comes in
     Output:
-        The log is written in csv file
-    """
-    
+        The log is written in logs.txt
+    """ 
     current_time = datetime.now()
     logs_time = "{}_{}_{}".format(str(current_time.year),str(current_time.month),str(current_time.day))
-    logs_file = os.path.join('logs',(logs_time+"_logs.csv"))
-    csv_header = 'profile,Date,taskPerformed,money_link,view_time,money,time2wait\n'
-    # Create a file if doesn't exist
-    if not os.path.isfile(logs_file):
-        with open(logs_file,"x") as f:
-            f.write(csv_header+'\n') 
-    
-    # Write to the top of the file
-    with open(logs_file, "r+",encoding="utf-8") as f:
-        first_line = f.read()
-        f.seek(0, 0)
-        logs_write='['+profile+'] ,' + str(datetime.now())+ ',' + str(taskPerformed) + ', '+ str(money_link) + ','+str(view_time)+ 's,'+str(money)+ ','+str(time2wait)+'\n'
-        f.write(logs_write.rstrip('\r\n') + '\n' + first_line)
-    
+    logs_file = os.path.join('logs',(logs_time+"_logs.csv")) 
+    with open(logs_file, "a+",encoding="utf-8") as f:
+        logs_write='['+profile+'] , ' + str(datetime.now())+ " , " + str(text) + ', '+ str(money_link) + " , "+str(view_time)+'s\n'
+        f.write(logs_write)
     print(logs_write)
 
 
@@ -546,7 +530,6 @@ def message_bot(main_tab,profile):
         Message Bot until finished
     """ 
         # Start messaging the Bots Second
-    last_money_earned = "(//p[starts-with(text(),'You earned')])[last()]/strong"
     send_command(main_tab,ltc_channel_command_input_field,'/bots')
     visit_message_bot_stop=1
     wait(5)
@@ -556,7 +539,7 @@ def message_bot(main_tab,profile):
         status_of_ads = ads_status(main_tab,telegram_last_message_area)
         
         if status_of_ads=='NoMoreAds':
-            logger('No'+status_of_ads,'Restarting','10',profile)
+            logger('NoMoreAds','Restarting','10',profile)
             visit_message_bot_stop = 0
             return 1
         
@@ -586,10 +569,10 @@ def message_bot(main_tab,profile):
                     wait(2)
                 else:
                     toc = time.perf_counter()
-                    logger('MessageBot',bot_channel_name,round(toc-tic,2),profile,money=get_text_of_element(main_tab,last_money_earned))
+                    logger('MessageBot',bot_channel_name,round(toc-tic,2),profile)
             except:
                 toc = time.perf_counter()
-                logger('MessageBot',bot_channel_name,round(toc-tic,2),profile,money=get_text_of_element(main_tab,last_money_earned))
+                logger('MessageBot',bot_channel_name,round(toc-tic,2),profile)
                     
 
 def visit_website(main_tab,profile):
@@ -602,7 +585,6 @@ def visit_website(main_tab,profile):
     Output:
         Visit website until finished
     """ 
-    last_money_earned = "(//p[starts-with(text(),'You earned')])[last()]/strong"
     send_command(main_tab,ltc_channel_command_input_field,'/visit')
     visit_website_stop=1
     wait(5)
@@ -612,7 +594,7 @@ def visit_website(main_tab,profile):
         status_of_ads = ads_status(main_tab,telegram_last_message_area) 
         if status_of_ads=='NoMoreAds':
             toc = time.perf_counter()
-            logger('NoVisitWebsite','Restarting',round(toc-tic,2),profile)
+            logger('NoMoreAds','Restarting',round(toc-tic,2),profile)
             visit_website_stop = 0
             return 1
         
@@ -624,8 +606,9 @@ def visit_website(main_tab,profile):
             adsStatus = open_link_until_make_money(money_link,main_tab)
             close_browser_by_name()
             toc = time.perf_counter()
-            logger(adsStatus,money_link,round(toc-tic,2),profile,money=get_text_of_element(main_tab,last_money_earned))
+            logger(adsStatus,money_link,round(toc-tic,2),profile)
             print('Closing Browser')
+
 
 # .....................
     
@@ -674,7 +657,7 @@ def join_this_channel_and_return_back(main_tab,channel_tag,original_channel='Lit
     click_when_loaded(main_tab,ltc_channel_joined_button)
     wait(2)
 
-def join_channel(main_tab,profile,time2wait=5):
+def join_channel(main_tab,profile,run_times=13):
     """ 
     Description: Join a channel to make money
     Input: 
@@ -683,35 +666,29 @@ def join_channel(main_tab,profile,time2wait=5):
     Output:
         Keeps joinging the paid channel forever
     """
-    last_time2wait = "(//p[starts-with(text(),'Success! ')])[last()]/strong"
-    # Start Joining the Channel third
+        # Start Joining the Channel third
     send_command(main_tab,ltc_channel_command_input_field,'/join')
     join_channel_start=1
     wait(5)
-    time2wait=1
     while join_channel_start:
-        # counter to check the total time
+        print('{} times running'.format(run_times))
+        if run_times < 0:
+            raise Exception('Stopping at {} times'.format(run_times+21))
+            join_channel_start = 0
+        #  the visit site to get the link
         tic = time.perf_counter()
         status_of_ads = ads_status(main_tab,telegram_last_message_area)
-        # Run Time 
-        # print('{} times running'.format(run_times))
-        # if run_times < 0:
-        #     raise Exception('Stopping at {} times'.format(run_times))
-        #  If no more ads available
-        if int(time2wait)>6:
-            raise Exception('Stooping at Wait Time {} hours'.format(str(time2wait)))
-
+        
         if status_of_ads=='NoMoreAds':
-            logger('NoJoinChannel','Restarting','10',profile)
+            logger('NoMoreAds','Restarting','10',profile)
             join_channel_start = 0
-        # elif status_of_ads=='JoinChannel' or status_of_ads=='JoinGroup':
-        else:
+            return 1
+        
+        elif status_of_ads=='JoinChannel' or status_of_ads=='JoinGroup':
             # links status from the visit website button
             bot_link=get_href_from_popup(main_tab,ltc_last_join_channel_group_button,ltc_last_popup_link)
             # Get the channel name from the browser history
-            main_tab.minimize_window()
             channel_link = get_final_url_from_clipboard(bot_link)
-            main_tab.maximize_window()
             channel_tag = channel_link.split('/')[-1].split('?')[0]
             # Search and traverse to the channel
             join_this_channel_and_return_back(main_tab,channel_tag)
@@ -726,17 +703,17 @@ def join_channel(main_tab,profile,time2wait=5):
                     click_when_loaded(main_tab,ltc_skip_button)
                     wait(2)
                     toc = time.perf_counter()
-                    logger("SkipJoinChannel",channel_tag,round(toc-tic,2),profile)
+                    logger("SkippedAds",channel_tag,round(toc-tic,2),profile)
                     wait(2)
                 else:
                     toc = time.perf_counter()
-                    time2wait = int(get_text_of_element(main_tab,last_time2wait))
-                    logger('JoinChannel',channel_tag,round(toc-tic,2),profile,Join_channel_wait_time=str(time2wait))
+                    logger('JoinChannel',channel_tag,round(toc-tic,2),profile)
+                    run_times=run_times-1
             except Exception as E:
+                run_times=run_times-1
                 toc = time.perf_counter()
-                time2wait = int(get_text_of_element(main_tab,last_time2wait))
-                logger('JoinChannel',channel_tag,round(toc-tic,2),profile,Join_channel_wait_time=str(time2wait))
-        
+                logger('JoinChannel',channel_tag,round(toc-tic,2),profile)
+
 
 def ppc_viewer(profile):
     """ 
@@ -764,22 +741,22 @@ def ppc_viewer(profile):
     try:
         message_bot(main_tab,profile)
     except Exception as E:
-        logger('ErrorMessageBot',str(E),'10',profile)
+        logger('error',str(E),'10',profile)
         close_browser_by_name()
         print(str(E))
     
     try:
         visit_website(main_tab,profile)
-    except Exception as E:
+    except:
         print(str(E))
-        logger('ErrorVisitedSite',str(E),'10',profile)
+        logger('error',str(E),'10',profile)
         close_browser_by_name()
     
     try:
-        join_channel(main_tab,profile,time2wait=6)
+        join_channel(main_tab,profile,run_times=5)
     except Exception as E:
         print(str(E))
-        logger('ErrorJoinChannel',str(E),'10',profile)
+        logger('error',str(E),'10',profile)
         close_browser_by_name()
     
     # delete channels between the given time interval only
@@ -790,7 +767,7 @@ def ppc_viewer(profile):
 
 def runner():
     # check if new ads are avialable
-    current_crypto_index=0
+    current_crypto_index=3
     while True:
         try:
             # this is done so that it doesn't pass over the given profiles
@@ -806,7 +783,7 @@ def runner():
         except Exception as E:
             print(str(E))
             current_crypto_index = current_crypto_index+1
-            logger('Error',str(E),'10',profile)
+            logger('error',str(E),'10',profile)
             wait(10)
             close_browser_by_name(browserName='Firefox.exe')
             #clear_cache()
