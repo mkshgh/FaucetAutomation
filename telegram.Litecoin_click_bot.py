@@ -110,6 +110,8 @@ ltc_last_join_channel_group_button = "(//div[@class='message-date-group']/div[la
 bot_channel_start_btn = "//button[@class='Button tiny primary fluid has-ripple']"
 bot_channel_name = "//div[@class='chat-info-wrapper']//child::h3"
 
+bot_ltc_send_button = "//button[contains(@title, 'Send Message')]"
+# "//button[@class='Button send  default secondary round']"
 
 last_LTC_earned = "(//p[contains(string(),'ou earned')])[last()]/strong[1]"
 # To do :
@@ -137,7 +139,7 @@ def get_driver(profile,zoom_level=0.8):
         Instance of the new browser
     """  
     options = FirefoxOptions()
-    # options.add_argument("--headless")
+    options.add_argument("--headless")
     fp = webdriver.FirefoxProfile(profile)
     # zoomed out because sometimes skip button was out of view 
     fp.set_preference("layout.css.devPixelsPerPx", str(zoom_level))
@@ -489,15 +491,12 @@ def forward_this_message(main_tab,channel='new'):
     ltc_last_message = "//div[@class='message-date-group']/div[last()]"
     bot_forward_button = "//div[@class='MessageSelectToolbar-inner']//child::i[@class='icon-forward']/.."
     bot_ltc_channel_button = "//div[@class='modal-dialog']//child::h3[text()='LTC Click Bot']//ancestor::div[@class='ListItem-button']"
-    bot_ltc_send_button = "//button[@class='Button send  default secondary round']"
-    ltc_last_message_link = "(//div[@class='message-date-group'][last()]/div)[last()]//a"
     ltc_setting_btn= "//div[@class='HeaderActions']//i[@class='icon-more']/.."
     ltc_select_btn= "//div[@class='bubble menu-container custom-scroll top right opacity-transition fast open shown']//i[@class='icon-select']/.."
     window_x = main_tab.get_window_size()['width']/2
     window_y = main_tab.get_window_size()['height']
 
-    click_when_loaded(main_tab,ltc_last_message_link,ttr=4)
-    click_when_loaded(main_tab,bot_channel_start_btn,ttr=6)
+    click_when_loaded(main_tab,bot_channel_start_btn,ttr=4)
     # name of the channel
     bot_channel = get_text_of_element(main_tab,bot_channel_name)
     
@@ -554,14 +553,19 @@ def message_bot(main_tab,profile):
         elif status_of_ads=='MessageBot':
             # links status from the visit website button
             bot_link=get_href_from_popup(main_tab,ltc_message_bot_button,ltc_last_popup_link)
-            wait(2)
             # visit website for compliance of the offer
             visit_link_for_time(bot_link)
             # forward to oneself to reveal the channel link
             forward_this_message(main_tab,channel='self')
             wait(2)
+            
             # forward the actuall needed channeld link
+            ltc_last_message_link = "(//div[@class='message-date-group'][last()]/div)[last()]//a"
+            click_when_loaded(main_tab,ltc_last_message_link,ttr=4)
+
             bot_channel_name = forward_this_message(main_tab,channel='new')
+            click_when_loaded(main_tab,bot_ltc_send_button)
+
             wait(2)
             # open bots command again
             send_command(main_tab,ltc_channel_command_input_field,'/bots')
@@ -778,19 +782,19 @@ def ppc_viewer(profile):
         close_browser_by_name()
         print(str(E))
     
-    # try:
+    try:
         visit_website(main_tab,profile)
     except Exception as E:
         print(str(E))
         logger('ErrorVisitedSite',str(E),'10',profile)
         close_browser_by_name()
     
-    try:
-        join_channel(main_tab,profile,time2wait=120)
-    except Exception as E:
-        print(str(E))
-        logger('ErrorJoinChannel',str(E),'10',profile)
-        close_browser_by_name()
+    # try:
+    #     join_channel(main_tab,profile,time2wait=120)
+    # except Exception as E:
+    #     print(str(E))
+    #     logger('ErrorJoinChannel',str(E),'10',profile)
+    #     close_browser_by_name()
     
     # delete channels between the given time interval only
     # if is_time_in_range(14,16):
